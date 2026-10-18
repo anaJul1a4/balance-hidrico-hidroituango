@@ -66,13 +66,22 @@ def d(a):
 XC = np.linspace(EXT[0], EXT[1], Z.shape[1]); YC = np.linspace(EXT[3], EXT[2], Z.shape[0])
 
 
-def mapa(ax, a, cmap, norm, titulo, sombra=0.18, lev=None, fmt="%g", caja=None):
+def suave(a, s=6):
+    """Campo suavizado (gaussiano, σ ≈ 0.5 km) sólo para trazar isolíneas legibles; los colores usan el campo original."""
+    from scipy.ndimage import gaussian_filter
+    v = np.where(mask & np.isfinite(a), a, 0.0); w = (mask & np.isfinite(a)).astype(float)
+    with np.errstate(invalid="ignore"):
+        return np.where(mask, gaussian_filter(v, s) / gaussian_filter(w, s), np.nan)
+
+
+def mapa(ax, a, cmap, norm, titulo, sombra=0.18, lev=None, fmt="%g", caja=None, rotulos=True):
     """Mapa a resolución completa con sombreado; lev = isolíneas rotuladas; caja = texto de media y rango (abajo a la derecha)."""
     im = ax.imshow(d(a), cmap=cmap, norm=norm, extent=EXT, interpolation="nearest", zorder=1)
     ax.imshow(HS, cmap="gray", alpha=sombra, extent=EXT, zorder=2)
     if lev is not None:
-        cs = ax.contour(XC, YC, np.where(mask, a, np.nan), levels=lev, colors="0.15", linewidths=0.25, zorder=3)
-        ax.clabel(cs, levels=cs.levels[::2] if len(cs.levels) > 4 else cs.levels, fmt=fmt, fontsize=4.5, inline_spacing=1)
+        cs = ax.contour(XC, YC, suave(a), levels=lev, colors="0.15", linewidths=0.3, zorder=3)   # isolíneas sobre el campo suavizado
+        if rotulos:
+            ax.clabel(cs, levels=cs.levels[::2] if len(cs.levels) > 4 else cs.levels, fmt=fmt, fontsize=4.5, inline_spacing=1)
     if caja:
         ax.text(0.97, 0.015, caja, transform=ax.transAxes, ha="right", va="bottom", fontsize=5.3, zorder=10,
                 bbox=dict(fc="white", ec="0.6", lw=0.3, pad=1.2, alpha=0.9))
@@ -96,10 +105,10 @@ def norte(ax, x=0.86, y=0.94):
 
 
 def escala_km(ax):
-    sx, sy = minx - 4000, maxy - 4000          # arriba a la izquierda: zona libre del encuadre
+    sx, sy = minx - 6000, miny - 4000          # abajo a la izquierda, al lado de la punta sur de la cuenca
     for i, c in enumerate(["black", "white"]):
-        ax.add_patch(plt.Rectangle((sx + i * 25000, sy), 25000, 3500, fc=c, ec="black", lw=0.4, zorder=9))
-    ax.text(sx + 53000, sy + 1750, "50 km", fontsize=5.5, ha="left", va="center")
+        ax.add_patch(plt.Rectangle((sx + i * 12500, sy), 12500, 3500, fc=c, ec="black", lw=0.4, zorder=9))
+    ax.text(sx + 12500, sy + 9000, "25 km", fontsize=5.5, ha="center", va="center")
 
 
 def barra(fig, esc, datos, ax, etiqueta, **kw):
@@ -134,7 +143,7 @@ def panel4(campos, esc_de, etiqueta_de, nombre, sub=None, lev_de=lambda t: None,
     fig, axs = plt.subplots(1, 4, figsize=(W, 3.05), gridspec_kw=dict(wspace=0.75))
     for i, (ax, (tit, a)) in enumerate(zip(axs, campos.items())):
         esc = esc_de(tit)
-        mapa(ax, a, esc["cmap"], esc["norm"], tit + (f"\n{sub(tit, a)}" if sub else ""), lev=lev_de(tit), caja=caja_de(tit, a))
+        mapa(ax, a, esc["cmap"], esc["norm"], tit + (f"\n{sub(tit, a)}" if sub else ""), lev=lev_de(tit), caja=caja_de(tit, a), rotulos=False)
         if "ticks" in esc and esc.get("barra", True):
             barra(fig, esc, a[mask], ax, etiqueta_de(tit))
         else:
@@ -145,7 +154,7 @@ def panel4(campos, esc_de, etiqueta_de, nombre, sub=None, lev_de=lambda t: None,
         if i:
             ax.set_yticklabels([])
     axs[0].set_ylabel("Norte (km)", fontsize=6.5, labelpad=1)
-    norte(axs[-1]); escala_km(axs[0]); pie_crs(fig, -0.02)
+    norte(axs[-1]); pie_crs(fig, -0.02)
     guardar(fig, nombre)
 
 
@@ -162,8 +171,8 @@ ESC4 = {"ETP (Hargreaves)": E.ETP, "Índice de aridez φ": dict(cmap=_cphi, norm
         "ETR (Budyko)": E.ETR, "R = P − ETR": E.R}
 UN4 = {"ETP (Hargreaves)": "ETP (mm/año)", "Índice de aridez φ": "φ = ETP / P", "ETR (Budyko)": "ETR (mm/año)", "R = P − ETR": "R (mm/año)"}
 campos4 = dict(zip(ESC4, G.values()))
-LEV4 = {"ETP (Hargreaves)": np.arange(800, 1901, 200), "Índice de aridez φ": [0.5, 0.75, 1.0], "ETR (Budyko)": np.arange(600, 1501, 200),
-        "R = P − ETR": np.arange(500, 2501, 500)}
+LEV4 = {"ETP (Hargreaves)": [1000, 1400, 1800], "Índice de aridez φ": [0.5, 1.0], "ETR (Budyko)": [800, 1100, 1400],
+        "R = P − ETR": [500, 1000, 2000]}
 panel4(campos4, lambda t: ESC4[t], lambda t: UN4[t], "panel_ETP_phi_ETR_R.png",
        sub=lambda t, a: f"media {media(a):.2f}" if "φ" in t else f"media {media(a):,.0f} mm/año".replace(",", " "),
        lev_de=lambda t: LEV4[t],

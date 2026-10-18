@@ -123,14 +123,19 @@ cambio(8, "Leyenda de la Figura 18 incompleta", "Leyenda de la Figura 18.",
        "Figura 18. Mes de máxima lluvia, número de picos del ciclo anual e índice de estacionalidad de Walsh y Lawler en cada celda.")
 
 d.add_heading("B. Figuras de precipitación con la nueva escala de color", 1)
-P("Todos los mapas de precipitación usan ahora la misma paleta (rojo en lo seco, amarillo cerca de la media de la cuenca, azul en lo "
-  "lluvioso), con el mismo color para cada valor en todos los mapas, incluida la figura nueva del mapeo de cuantiles. Reemplazar la "
-  "imagen de las Figuras 2, 4, 13 y 16 por estas (las leyendas no cambian). Las Figuras 8 y 15 (escorrentía) no cambian.",
+P("Todos los mapas usan ahora un mismo código de color: para el agua disponible (precipitación y escorrentía), rojo = poca agua, "
+  "amarillo cerca de la media de la cuenca y azul = mucha agua; para la evaporación (ETP y ETR), blanco → amarillo → rojo, con las "
+  "mismas clases en los dos mapas. Ya no hay verdes. Cada valor tiene el mismo color en todos los mapas de su variable, incluida la "
+  "figura nueva del mapeo de cuantiles. Reemplazar la imagen de las Figuras 2, 4, 8, 13, 15 y 16 por estas.",
   cursiva=True, gris=True, tam=10)
-for nombre, ancho, ley in [("mapa_estaciones_P.png", 8.5, "Figura 2. (reemplazar imagen)"),
-                           ("mapa_P_anual.png", 8.5, "Figura 4. (reemplazar imagen)"),
-                           ("panel_P_productos.png", 16, "Figura 13. (reemplazar imagen)"),
-                           ("panel_P_mensual.png", 16, "Figura 16. (reemplazar imagen)")]:
+for nombre, ancho, ley in [("mapa_estaciones_P.png", 8.5, "Figura 2. (reemplazar imagen; la leyenda no cambia)"),
+                           ("mapa_P_anual.png", 8.5, "Figura 4. (reemplazar imagen; la leyenda no cambia)"),
+                           ("panel_ETP_phi_ETR_R.png", 16, "Figura 8. Evapotranspiración potencial de Hargreaves, índice de aridez φ, "
+                            "evapotranspiración real de Budyko y escorrentía R = P − ETR. ETP y ETR comparten paleta y clases; la "
+                            "escorrentía usa el código de la precipitación (rojo = poca agua, azul = mucha)."),
+                           ("panel_P_productos.png", 16, "Figura 13. (reemplazar imagen; la leyenda no cambia)"),
+                           ("panel_R_productos.png", 16, "Figura 15. (reemplazar imagen; la leyenda no cambia)"),
+                           ("panel_P_mensual.png", 16, "Figura 16. (reemplazar imagen; la leyenda no cambia)")]:
     figura(nombre, ancho, ley)
 
 d.add_heading("C. Subsección nueva: corrección del sesgo de ERA5 y ERA5-Land", 1)

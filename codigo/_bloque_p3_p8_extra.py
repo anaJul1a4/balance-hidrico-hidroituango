@@ -6,8 +6,8 @@ DATA["cv"] = {"n": _cv.nombre.tolist(), "obs": _cv["P observada"].tolist(),
 S["p3"] = (S["p3"][0], S["p3"][1] + ancho(
     "s_cv", "<p><b>Precipitación observada frente a estimada en la validación cruzada.</b> Cada punto es una estación: su lluvia se estimó "
             "con las demás y se comparó con la medida. Sobre la línea 1:1 la estimación es exacta. Los puntos más alejados son núcleos "
-            "lluviosos aislados (El Tambo, la ladera occidental) que ninguna estación vecina representa. Use los botones para comparar "
-            "kriging e IDW.</p>"))
+            "lluviosos aislados (El Tambo, la ladera occidental) que ninguna estación vecina representa. Se muestran juntos kriging e IDW; el cursor muestra "
+            "cada estación.</p>"))
 
 pis = pd.read_csv(C15 / "pisos_termicos.csv")
 pist = pis.set_index("piso")[["Tmed (°C)", "elevación (m)", "área (km²)", "% del área"]]; pist.index.name = "Piso térmico"
@@ -29,7 +29,7 @@ Macizo.</p>""") + ancho(
              f"medida. Sesgo de {_e['Tmax'].mean():+.1f} / {_e['Tmed'].mean():+.1f} / {_e['Tmin'].mean():+.1f} °C y RMSE de "
              f"{np.sqrt((_e['Tmax'] ** 2).mean()):.1f} / {np.sqrt((_e['Tmed'] ** 2).mean()):.1f} / {np.sqrt((_e['Tmin'] ** 2).mean()):.1f} °C "
              "(Tmax / Tmed / Tmin). Los puntos más alejados son estaciones cuya coordenada cae en otra cota del DEM: el cursor muestra la "
-             "diferencia entre la elevación del DEM y la del catálogo. Use los botones para cambiar de variable.</p>"))
+             "diferencia entre la elevación del DEM y la del catálogo. Se muestran las tres variables; el cursor indica la estación.</p>"))
 
 ra = pd.read_csv(C15 / "Ra_mes_latitud.csv", index_col=0)
 et = pd.read_csv(C15 / "ETP_vs_Tmed.csv")

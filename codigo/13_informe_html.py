@@ -93,7 +93,9 @@ def figura(src, nombre, titulo, nota="", ancho_px=1800):
     if im.width > ancho_px:
         im = im.resize((ancho_px, round(im.height * ancho_px / im.width)), Image.LANCZOS)
     im.save(IMG / f"{nombre}.webp", "WEBP", quality=88, method=6)
-    ruta = f"img/{nombre}.webp"
+    import hashlib
+    ver = hashlib.md5((IMG / f"{nombre}.webp").read_bytes()).hexdigest()[:8]      # versión: el navegador no reusa una figura vieja
+    ruta = f"img/{nombre}.webp?v={ver}"
     return (f"<figure class='fig'><button type='button' class='zoom' data-src='{ruta}' aria-label='Ampliar: {html.escape(titulo)}'>"
             f"<img src='{ruta}' width='{im.width}' height='{im.height}' loading='lazy' alt='{html.escape(titulo)}'></button>"
             f"<figcaption><b>{titulo}.</b> {nota}</figcaption></figure>")
@@ -205,9 +207,12 @@ H = bal.set_index("codigo").loc["HIDRO"]
 A_C = morf["Área (km²)"]
 S = {}
 
-S["p1"] = ("1. Selección de la cuenca", f"""
+FOTO_P1 = figura("fotos/Hidroituango_2022.jpg", "p1_foto", "Central hidroeléctrica Hidroituango, 2022",
+                 "Presa, vertedero y embalse sobre el cañón del río Cauca (Antioquia). Foto: Presidencia de la República de Colombia, "
+                 "<a href='https://commons.wikimedia.org/wiki/File:Hidroituango_2022.jpg'>Wikimedia Commons</a>, dominio público (CC0).", 1400)
+S["p1"] = ("1. Selección de la cuenca", f"""<div class="fila"><div class="texto">
 <p class="lead">Cuenca del río Cauca hasta la presa de Hidroituango (Antioquia): {fmt(A_C)} km² entre las cordilleras Occidental y Central,
-desde el Macizo Colombiano (≈ 3400 m) hasta el cañón del Cauca (≈ 240 m), en siete departamentos.</p>
+desde el Macizo Colombiano (≈ 3400 m) hasta el cañón del Cauca (≈ 240 m), casi toda en seis departamentos.</p>
 <h3>Importancia para el sector hidroeléctrico</h3>
 <p>Cerca de dos tercios de la electricidad de Colombia es de origen hidráulico, y Hidroituango es la central más grande del país:
 2 400 MW de capacidad de diseño, que según EPM pueden cubrir alrededor del 17 % de la demanda nacional. Su generación depende del caudal
@@ -217,7 +222,8 @@ medio, qué zonas la producen y cuáles la consumen, y qué tan confiables son l
 además otros usos que compiten por el agua: el embalse de Salvajina (regulación y generación en el alto Cauca), el abastecimiento de Cali
 y el riego de la caña de azúcar en el Valle. Esos usos se notan en el balance de los puntos 8 y 9.</p>
 <p>Es también un caso exigente para el método: combina un valle plano y seco a la sombra de lluvia, laderas muy húmedas y páramos, con
-gradientes fuertes de lluvia y temperatura en pocas decenas de kilómetros.</p>""")
+gradientes fuertes de lluvia y temperatura en pocas decenas de kilómetros.</p>
+</div><div class="figcol">{FOTO_P1}</div></div>""")
 
 S["p2"] = ("2. Delimitación", lado(figura("01_delimitacion/mapa_cuenca_cauca_hidroituango.png", "p2_mapa", "Cuenca del río Cauca hasta Hidroituango", "DEM, límite, red de drenaje (Strahler 3–5), río principal, punto de cierre, norte, escala y sistema de coordenadas MAGNA-SIRGAS / Colombia Bogotá (EPSG:3116)."), f"""
 <p class="lead">Área {fmt(A_C)} km² · perímetro {fmt(morf['Perímetro (km)'])} km · río principal {fmt(morf['Long. río principal (km)'])} km ·
@@ -361,8 +367,8 @@ S["p8"] = (S["p8"][0], S["p8"][1] + tabla(qt, "Ubicación, área de drenaje, per
                                           {"Lat (°)": ".4f", "Lon (°)": ".4f", "Área (km²)": ",.0f", "Años 1981–2010": ".0f", "Q medio (m³/s)": ",.1f"}) +
            figura("06_caudales/disponibilidad_caudales.png", "p8_disp", "Disponibilidad de datos de las estaciones descargadas",
                   "Meses con al menos 80 % de días con dato. Verde: 15 años completos o más en 1981–2010 (validada); rojo: no cumple.", 1600) +
-           ancho("s_Q", "<p><b>Caudal medio mensual.</b> Seleccione una o varias estaciones en la leyenda; arrastre sobre el gráfico o use la barra "
-                        "inferior para acercarse a un periodo. La franja marca 1981–2010. El régimen es bimodal, con picos en mayo y noviembre. Los años más "
+           ancho("s_Q", "<p><b>Caudal medio mensual.</b> Pase el cursor para ver el caudal de cada estación en cada mes. "
+                        "La franja marca 1981–2010. El régimen es bimodal, con picos en mayo y noviembre. Los años más "
                         "caudalosos (1999, 2008, 2010–11, 2022) coinciden con La Niña, con el máximo mensual en noviembre de 2010 (3167 m³/s en Pto. Valdivia); "
                         "los más secos (1992, 2015–16) con El Niño.</p>",
                  alto="serie alta"))
@@ -382,8 +388,8 @@ DATA["cv"] = {"n": _cv.nombre.tolist(), "obs": _cv["P observada"].tolist(),
 S["p3"] = (S["p3"][0], S["p3"][1] + ancho(
     "s_cv", "<p><b>Precipitación observada frente a estimada en la validación cruzada.</b> Cada punto es una estación: su lluvia se estimó "
             "con las demás y se comparó con la medida. Sobre la línea 1:1 la estimación es exacta. Los puntos más alejados son núcleos "
-            "lluviosos aislados (El Tambo, la ladera occidental) que ninguna estación vecina representa. Use los botones para comparar "
-            "kriging e IDW.</p>"))
+            "lluviosos aislados (El Tambo, la ladera occidental) que ninguna estación vecina representa. Se muestran juntos kriging e IDW; el cursor muestra "
+            "cada estación.</p>"))
 
 pis = pd.read_csv(C15 / "pisos_termicos.csv")
 pist = pis.set_index("piso")[["Tmed (°C)", "elevación (m)", "área (km²)", "% del área"]]; pist.index.name = "Piso térmico"
@@ -405,7 +411,7 @@ Macizo.</p>""") + ancho(
              f"medida. Sesgo de {_e['Tmax'].mean():+.1f} / {_e['Tmed'].mean():+.1f} / {_e['Tmin'].mean():+.1f} °C y RMSE de "
              f"{np.sqrt((_e['Tmax'] ** 2).mean()):.1f} / {np.sqrt((_e['Tmed'] ** 2).mean()):.1f} / {np.sqrt((_e['Tmin'] ** 2).mean()):.1f} °C "
              "(Tmax / Tmed / Tmin). Los puntos más alejados son estaciones cuya coordenada cae en otra cota del DEM: el cursor muestra la "
-             "diferencia entre la elevación del DEM y la del catálogo. Use los botones para cambiar de variable.</p>"))
+             "diferencia entre la elevación del DEM y la del catálogo. Se muestran las tres variables; el cursor indica la estación.</p>"))
 
 ra = pd.read_csv(C15 / "Ra_mes_latitud.csv", index_col=0)
 et = pd.read_csv(C15 / "ETP_vs_Tmed.csv")
@@ -516,7 +522,7 @@ t11 = r11[["P media cuenca (mm/año)", "mínimo (mm/año)", "máximo (mm/año)",
 t11.columns = ["P media (mm/año)", "Mínimo (mm/año)", "Máximo (mm/año)", "Diferencia con IDEAM (%)", "Correlación espacial con IDEAM"]
 t11 = t11.rename(index={"CHIRPS": "CHIRPS v2.0"}); t11.index.name = "1981–2010"
 S["p11"] = ("11. Mapas de precipitación por producto", abajo(
-    figura("11_mapas_productos/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
+    figura("informe_figs/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
            "IDEAM (kriging, punto 3) como referencia y los tres productos en su resolución original, con la misma escala de color.", 2400),
     f"""
 <p class="lead">Precipitación media de la cuenca 1981–2010: IDEAM {fmt(r11.loc['IDEAM (kriging)', 'P media cuenca (mm/año)'])} mm, CHIRPS
@@ -633,7 +639,7 @@ una corrección de sesgo basada en estaciones.</p>
 </div></div>
 {tabla(e12, "Error del caudal estimado por área de drenaje y producto", {p: "+.1f" for p in e12.columns})}""" +
     ancho("s_p12", "<p><b>Q estimado / Q observado por área de drenaje</b> (escala logarítmica). 1 = balance perfecto; la franja marca ±10 %. "
-                   "Haga clic en la leyenda para mostrar u ocultar productos.</p>") +
+                   "El cursor muestra el valor de cada producto.</p>") +
     ancho("s_bud", "<p><b>Áreas de drenaje en el espacio de Budyko con la ETR «observada» = P − Q<sub>obs</sub>.</b> Sobre la curva, la lluvia "
                    "del producto es coherente con el caudal; por encima del límite de energía (línea punteada) el balance no puede cerrar. "
                    "El cursor muestra la corrección de P necesaria.</p>") +
@@ -744,7 +750,7 @@ marzo–mayo y hacia el sur en septiembre–noviembre. Por eso el sur (alto Cauc
 mitad de año. Los caudales del punto 8 reproducen este régimen bimodal.</p>""") +
     ancho("s_p13", "<p><b>Ciclo anual de la precipitación.</b> Barras: media de la cuenca (P̄m), en azul los meses húmedos (sobre la media "
                    "mensual, línea punteada) y en gris los secos; líneas: media de cada región. "
-                   "Haga clic en la leyenda para mostrar u ocultar regiones.</p>") +
+                   "El cursor muestra el valor de cada región.</p>") +
     tabla(t13, "Precipitación media mensual 1981–2010 (mm)", {c: ",.0f" for c in t13.columns}) +
     lado(figura("15_complementarias/estacionalidad.png", "p13_estac", "Mes de máxima lluvia, número de temporadas lluviosas e índice de estacionalidad",
                 "Calculados en cada celda (≈ 900 m) a partir de los 12 mapas mensuales.", 2200), f"""
@@ -799,8 +805,8 @@ S["p14"] = ("14. Ciclo anual entre productos", f"""
 <p class="lead">CHIRPS reproduce el ciclo anual del IDEAM (r = {mc.loc['CHIRPS', 'r']:.3f}) con un sesgo de apenas
 {mc.loc['CHIRPS', 'Sesgo (mm/mes)']:+.1f} mm/mes ({mc.loc['CHIRPS', 'Sesgo (%)']:+.1f} %). ERA5-Land (r = {mc.loc['ERA5-Land', 'r']:.2f}) y ERA5
 (r = {mc.loc['ERA5', 'r']:.2f}) triplican la lluvia de todos los meses, corren el máximo a mayo y casi borran la temporada seca de mitad de año.</p>""" +
-    ancho("s_p14", "<p><b>Ciclo anual de la cuenca por producto</b> (media mensual 1981–2010 promediada sobre la cuenca). Use los botones "
-                   "para ver la magnitud o el ciclo normalizado (% del total anual), que compara sólo la estacionalidad.</p>",
+    ancho("s_p14", "<p><b>Ciclo anual de la cuenca por producto</b> (media mensual 1981–2010 promediada sobre la cuenca). El cursor "
+                   "muestra la lluvia de cada mes y su porcentaje del total anual, que compara sólo la estacionalidad.</p>",
           extra="") + f"""
 {tabla(t14, "Indicadores del ciclo anual (n = 12 meses, referencia IDEAM)",
        {"Total anual (mm)": ",.0f", "Sesgo (mm/mes)": "+,.1f", "Sesgo (%)": "+.1f", "RMSE (mm/mes)": ",.1f", "Correlación r": ".3f",
@@ -817,7 +823,7 @@ ERA5 y ERA5-Land quedan lejos: correlación de 0.6–0.7 y 60 % más variabilida
 </div></div>""" +
     ancho("s_pp", "<p><b>Producto frente a estación (punto a píxel).</b> Precipitación media anual de cada producto en la celda de cada una de "
                   "las estaciones de la cuenca, frente a la medida. Para el IDEAM se usa el valor estimado sin esa estación (validación cruzada), "
-                  "para que la comparación sea justa. Use los botones para cambiar de producto.</p>") + f"""
+                  "para que la comparación sea justa. Se muestran los cuatro productos; el cursor indica la estación.</p>") + f"""
 <div class="dos"><div>
 {tabla(tpp, "Comparación punto a píxel 1981–2010", {"sesgo (mm/año)": "+,.0f", "RMSE (mm/año)": ",.0f", "r": ".2f"},
        "Parte del error es de escala: un píxel de 28 km (ERA5) no puede reproducir un valor puntual.")}

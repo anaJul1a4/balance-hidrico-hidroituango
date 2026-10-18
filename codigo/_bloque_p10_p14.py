@@ -51,7 +51,7 @@ t11 = r11[["P media cuenca (mm/año)", "mínimo (mm/año)", "máximo (mm/año)",
 t11.columns = ["P media (mm/año)", "Mínimo (mm/año)", "Máximo (mm/año)", "Diferencia con IDEAM (%)", "Correlación espacial con IDEAM"]
 t11 = t11.rename(index={"CHIRPS": "CHIRPS v2.0"}); t11.index.name = "1981–2010"
 S["p11"] = ("11. Mapas de precipitación por producto", abajo(
-    figura("11_mapas_productos/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
+    figura("informe_figs/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
            "IDEAM (kriging, punto 3) como referencia y los tres productos en su resolución original, con la misma escala de color.", 2400),
     f"""
 <p class="lead">Precipitación media de la cuenca 1981–2010: IDEAM {fmt(r11.loc['IDEAM (kriging)', 'P media cuenca (mm/año)'])} mm, CHIRPS
@@ -168,7 +168,7 @@ una corrección de sesgo basada en estaciones.</p>
 </div></div>
 {tabla(e12, "Error del caudal estimado por área de drenaje y producto", {p: "+.1f" for p in e12.columns})}""" +
     ancho("s_p12", "<p><b>Q estimado / Q observado por área de drenaje</b> (escala logarítmica). 1 = balance perfecto; la franja marca ±10 %. "
-                   "Haga clic en la leyenda para mostrar u ocultar productos.</p>") +
+                   "El cursor muestra el valor de cada producto.</p>") +
     ancho("s_bud", "<p><b>Áreas de drenaje en el espacio de Budyko con la ETR «observada» = P − Q<sub>obs</sub>.</b> Sobre la curva, la lluvia "
                    "del producto es coherente con el caudal; por encima del límite de energía (línea punteada) el balance no puede cerrar. "
                    "El cursor muestra la corrección de P necesaria.</p>") +
@@ -234,7 +234,7 @@ marzo–mayo y hacia el sur en septiembre–noviembre. Por eso el sur (alto Cauc
 mitad de año. Los caudales del punto 8 reproducen este régimen bimodal.</p>""") +
     ancho("s_p13", "<p><b>Ciclo anual de la precipitación.</b> Barras: media de la cuenca (P̄m), en azul los meses húmedos (sobre la media "
                    "mensual, línea punteada) y en gris los secos; líneas: media de cada región. "
-                   "Haga clic en la leyenda para mostrar u ocultar regiones.</p>") +
+                   "El cursor muestra el valor de cada región.</p>") +
     tabla(t13, "Precipitación media mensual 1981–2010 (mm)", {c: ",.0f" for c in t13.columns}) +
     lado(figura("15_complementarias/estacionalidad.png", "p13_estac", "Mes de máxima lluvia, número de temporadas lluviosas e índice de estacionalidad",
                 "Calculados en cada celda (≈ 900 m) a partir de los 12 mapas mensuales.", 2200), f"""
@@ -289,8 +289,8 @@ S["p14"] = ("14. Ciclo anual entre productos", f"""
 <p class="lead">CHIRPS reproduce el ciclo anual del IDEAM (r = {mc.loc['CHIRPS', 'r']:.3f}) con un sesgo de apenas
 {mc.loc['CHIRPS', 'Sesgo (mm/mes)']:+.1f} mm/mes ({mc.loc['CHIRPS', 'Sesgo (%)']:+.1f} %). ERA5-Land (r = {mc.loc['ERA5-Land', 'r']:.2f}) y ERA5
 (r = {mc.loc['ERA5', 'r']:.2f}) triplican la lluvia de todos los meses, corren el máximo a mayo y casi borran la temporada seca de mitad de año.</p>""" +
-    ancho("s_p14", "<p><b>Ciclo anual de la cuenca por producto</b> (media mensual 1981–2010 promediada sobre la cuenca). Use los botones "
-                   "para ver la magnitud o el ciclo normalizado (% del total anual), que compara sólo la estacionalidad.</p>",
+    ancho("s_p14", "<p><b>Ciclo anual de la cuenca por producto</b> (media mensual 1981–2010 promediada sobre la cuenca). El cursor "
+                   "muestra la lluvia de cada mes y su porcentaje del total anual, que compara sólo la estacionalidad.</p>",
           extra="") + f"""
 {tabla(t14, "Indicadores del ciclo anual (n = 12 meses, referencia IDEAM)",
        {"Total anual (mm)": ",.0f", "Sesgo (mm/mes)": "+,.1f", "Sesgo (%)": "+.1f", "RMSE (mm/mes)": ",.1f", "Correlación r": ".3f",
@@ -307,7 +307,7 @@ ERA5 y ERA5-Land quedan lejos: correlación de 0.6–0.7 y 60 % más variabilida
 </div></div>""" +
     ancho("s_pp", "<p><b>Producto frente a estación (punto a píxel).</b> Precipitación media anual de cada producto en la celda de cada una de "
                   "las estaciones de la cuenca, frente a la medida. Para el IDEAM se usa el valor estimado sin esa estación (validación cruzada), "
-                  "para que la comparación sea justa. Use los botones para cambiar de producto.</p>") + f"""
+                  "para que la comparación sea justa. Se muestran los cuatro productos; el cursor indica la estación.</p>") + f"""
 <div class="dos"><div>
 {tabla(tpp, "Comparación punto a píxel 1981–2010", {"sesgo (mm/año)": "+,.0f", "RMSE (mm/año)": ",.0f", "r": ".2f"},
        "Parte del error es de escala: un píxel de 28 km (ERA5) no puede reproducir un valor puntual.")}

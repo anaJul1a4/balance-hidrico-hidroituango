@@ -6,8 +6,8 @@ dibujan colores que el mapa no usa) y empieza siempre en 0 (blanco en ETP, ETR y
     P anual (mm/año)      rojo (seco) → amarillo → azul (lluvioso), RdYlBu   puntos 3, 11, 12 y CHIRPS v2/v3
     P mensual (mm/mes)    la misma paleta, clases en mm/mes                       punto 13
     ETP (mm/año)          blanco → amarillo → rojo (YlOrRd)                        punto 6
-    ETR (mm/año)          blanco → verdes (YlGn), mismas clases que la ETP         punto 7
-    R = P − ETR (mm/año)  blanco → verde-azul (GnBu)                               puntos 7 y 12
+    ETR (mm/año)          blanco → amarillo → rojo, igual que la ETP (mismas clases) punto 7
+    R = P − ETR (mm/año)  rojo (poca) → amarillo → azul (mucha), RdYlBu           puntos 7 y 12
     T (°C)                RdYlBu_r, −6 a 36 °C (divergente, convención usual)      punto 5
 """
 import matplotlib.pyplot as plt
@@ -49,8 +49,10 @@ _POS_P = [0.0, 0.1, 0.2, 0.32, 0.45, 0.58, 0.66, 0.72, 0.78, 0.85, 0.92, 1.0]
 P = _esc(ListedColormap(plt.get_cmap("RdYlBu")(_POS_P)), P_CL)
 PM = _esc(plt.get_cmap("RdYlBu", len(PM_CL) - 1), PM_CL)
 ETP = _esc(_desde_blanco("YlOrRd", len(ET_CL) - 1), ET_CL)
-ETR = _esc(_desde_blanco("YlGn", len(ET_CL) - 1), ET_CL)
-R = _esc(_desde_blanco("GnBu", len(R_CL) - 1), R_CL)         # escorrentía: verde-azul, distinta de la lluvia
+ETR = _esc(_desde_blanco("YlOrRd", len(ET_CL) - 1), ET_CL)      # misma paleta y clases que la ETP: ETR ≤ ETP se lee directo
+# escorrentía con el código de la lluvia: rojo = poca agua, azul = mucha; amarillo en 750–1000 mm (media de la cuenca ≈ 900 mm)
+_POS_R = [0.02, 0.15, 0.3, 0.47, 0.6, 0.67, 0.72, 0.77, 0.83, 0.89, 0.95, 1.0]
+R = _esc(ListedColormap(plt.get_cmap("RdYlBu")(_POS_R)), R_CL)
 T_VMIN, T_VMAX, T_CMAP = -6, 36, "RdYlBu_r"
 
 

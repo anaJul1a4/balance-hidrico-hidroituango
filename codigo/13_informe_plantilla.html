@@ -85,7 +85,7 @@ ul.refs { padding-left: 1.1rem; display: grid; gap: .55rem; max-width: 95ch; fon
 
 <header><div class="hd">
   <h1>Balance hídrico de largo plazo · Río Cauca hasta Hidroituango</h1>
-  <p>Trabajo 1 de Hidroclimatología · 1981–2010 · mapas: clic para ampliar · gráficos: arrastre para acercar, doble clic para restablecer</p>
+  <p>Trabajo 1 de Hidroclimatología · 1981–2010 · mapas: clic para ampliar · gráficos: pase el cursor para ver los valores</p>
   <nav role="tablist" aria-label="Puntos del trabajo">%%TABS%%</nav>
 </div></header>
 <main>%%PANES%%</main>
@@ -96,7 +96,20 @@ ul.refs { padding-left: 1.1rem; display: grid; gap: .55rem; max-width: 95ch; fon
 const D = %%DATA%%;
 const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const v = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const CFG = { responsive: true, displaylogo: false, scrollZoom: true, modeBarButtonsToRemove: ["lasso2d", "select2d", "autoScale2d", "toggleSpikelines"] };
+const CFG = { responsive: true, displaylogo: false, displayModeBar: false, scrollZoom: false, doubleClick: false };
+/* Gráficas «estáticas»: sin zoom, arrastre, botones ni leyendas que oculten series; sólo los valores al pasar el cursor. */
+const _react = Plotly.react.bind(Plotly);
+Plotly.react = function (el, tr, L, cfg) {
+  (tr || []).forEach(t => { if (t.visible === false || t.visible === "legendonly") t.visible = true; });
+  L = L || {}; delete L.updatemenus; L.dragmode = false;
+  ["xaxis", "yaxis"].concat(Object.keys(L).filter(k => /^[xy]axis\d+$/.test(k))).forEach(k => {   // sólo ejes existentes
+    L[k] = Object.assign({}, L[k] || {}, { fixedrange: true });
+    if (L[k].rangeslider) L[k].rangeslider = { visible: false };
+    delete L[k].rangeselector;
+  });
+  L.legend = Object.assign({}, L.legend || {}, { itemclick: false, itemdoubleclick: false });
+  return _react(el, tr, L, Object.assign({}, cfg || {}, CFG));
+};
 
 function ax(t, extra) {
   return Object.assign({ title: { text: t, font: { size: 11, color: v("--muted") } }, gridcolor: v("--grid"), linecolor: v("--axis"),
@@ -193,10 +206,7 @@ const PLOTS = {
     const tot = p => d[p].reduce((a, b) => a + b, 0);
     const abs = prods.map((p, i) => ({ type: "scatter", mode: "lines+markers", name: p, x: MESES, y: d[p],
       line: { color: col[i], width: p === "IDEAM" ? 2.6 : 1.8 }, marker: { size: 7, color: col[i], line: { color: v("--bg"), width: 1.5 } },
-      hovertemplate: `${p} · %{x}: %{y:.0f} mm<extra></extra>` }));
-    const rel = prods.map((p, i) => ({ type: "scatter", mode: "lines+markers", name: p, x: MESES, y: d[p].map(x => 100 * x / tot(p)),
-      visible: false, showlegend: true, line: { color: col[i], width: p === "IDEAM" ? 2.6 : 1.8, dash: "dot" },
-      marker: { size: 7, color: col[i], line: { color: v("--bg"), width: 1.5 } }, hovertemplate: `${p} · %{x}: %{y:.1f} % del año<extra></extra>` }));
+      customdata: d[p].map(x => 100 * x / tot(p)), hovertemplate: `${p} · %{x}: %{y:.0f} mm (%{customdata:.1f} % del año)<extra></extra>` }));
     const L = lay({ showlegend: true, margin: { l: 56, r: 12, t: 48, b: 36 }, xaxis: ax(""), yaxis: ax("Precipitación media mensual (mm)", { rangemode: "tozero" }) });
     L.updatemenus = [{ type: "buttons", direction: "right", x: 1, xanchor: "right", y: 1.16, yanchor: "top", bgcolor: v("--bg"),
       bordercolor: v("--hair"), font: { size: 11, color: v("--ink") }, active: 0, buttons: [
@@ -204,7 +214,7 @@ const PLOTS = {
           { "yaxis.title.text": "Precipitación media mensual (mm)", "yaxis.rangemode": "tozero" }] },
         { label: "Normalizado (% del año)", method: "update", args: [{ visible: [false, false, false, false, true, true, true, true] },
           { "yaxis.title.text": "% del total anual", "yaxis.rangemode": "normal" }] }] }];
-    Plotly.react(el, abs.concat(rel), L, CFG);
+    Plotly.react(el, abs, L, CFG);
   },
   s_taylor(el) {
     const t = D.p14.taylor, col = { "CHIRPS": "#2a78d6", "ERA5-Land": "#eb6834", "ERA5": "#1baf7a" }, deg = r => Math.acos(r) * 180 / Math.PI;
@@ -230,12 +240,12 @@ const PLOTS = {
   },
   s_cv(el) {
     const d = D.cv, m = 4600, ink = v("--ink");
-    const mk = (y, nm, vis) => ({ type: "scatter", mode: "markers", name: nm, x: d.obs, y: y, text: d.n, visible: vis,
-      marker: { size: 7, color: v("--accent"), opacity: .75, line: { color: v("--bg"), width: 1 } },
-      hovertemplate: "<b>%{text}</b><br>medida %{x:,.0f} mm · estimada %{y:,.0f} mm<extra></extra>" });
-    const tr = [mk(d.kri, "Kriging ordinario", true), mk(d.idw, "IDW p = 1.5", false),
+    const mk = (y, nm, c, sym) => ({ type: "scatter", mode: "markers", name: nm, x: d.obs, y: y, text: d.n,
+      marker: { size: 7, color: c, symbol: sym, opacity: .7, line: { color: v("--bg"), width: 1 } },
+      hovertemplate: `<b>%{text}</b><br>medida %{x:,.0f} mm · ${nm} %{y:,.0f} mm<extra></extra>` });
+    const tr = [mk(d.kri, "Kriging ordinario (RMSE 363 mm)", "#2a78d6", "circle"), mk(d.idw, "IDW p = 1.5 (RMSE 364 mm)", "#eb6834", "diamond"),
       { type: "scatter", mode: "lines", x: [0, m], y: [0, m], line: { color: ink, width: 1 }, hoverinfo: "skip", showlegend: false }];
-    const L = lay({ xaxis: ax("P observada (mm/año)", { range: [0, m] }), yaxis: ax("P estimada sin la estación (mm/año)", { range: [0, m] }),
+    const L = lay({ showlegend: true, xaxis: ax("P observada (mm/año)", { range: [0, m] }), yaxis: ax("P estimada sin la estación (mm/año)", { range: [0, m] }),
       margin: { l: 56, r: 12, t: 44, b: 40 } });
     L.updatemenus = [{ type: "buttons", direction: "right", x: 0, xanchor: "left", y: 1.12, yanchor: "top", bgcolor: v("--bg"),
       bordercolor: v("--hair"), font: { size: 11, color: ink }, active: 0, buttons: [
@@ -249,7 +259,8 @@ const PLOTS = {
       customdata: d.n.map((n, j) => [n, d.dz[j]]), marker: { size: 8, color: col[k], line: { color: v("--bg"), width: 1.5 } },
       hovertemplate: `<b>%{customdata[0]}</b><br>${k} medida %{x:.1f} °C · mapa %{y:.1f} °C<br>Z DEM − Z catálogo: %{customdata[1]:+,.0f} m<extra></extra>` }));
     tr.push({ type: "scatter", mode: "lines", x: [0, 36], y: [0, 36], line: { color: v("--ink"), width: 1 }, hoverinfo: "skip" });
-    const L = lay({ xaxis: ax("Temperatura medida en la estación (°C)", { range: [0, 36] }), yaxis: ax("Temperatura del mapa (°C)", { range: [-2, 36] }),
+    tr[tr.length - 1].showlegend = false;
+    const L = lay({ showlegend: true, xaxis: ax("Temperatura medida en la estación (°C)", { range: [0, 36] }), yaxis: ax("Temperatura del mapa (°C)", { range: [-2, 36] }),
       margin: { l: 56, r: 12, t: 44, b: 40 } });
     L.updatemenus = [{ type: "buttons", direction: "right", x: 0, xanchor: "left", y: 1.12, yanchor: "top", bgcolor: v("--bg"),
       bordercolor: v("--hair"), font: { size: 11, color: v("--ink") }, active: 1,
@@ -303,11 +314,13 @@ const PLOTS = {
   },
   s_pp(el) {
     const d = D.pp, ks = ["CHIRPS", "IDEAM (kriging sin la estación)", "ERA5-Land", "ERA5"], ink = v("--ink");
-    const tr = ks.map((k, i) => ({ type: "scatter", mode: "markers", name: k, x: d.obs, y: d[k], text: d.est, visible: i === 0,
-      marker: { size: 6, color: v("--accent"), opacity: .7, line: { color: v("--bg"), width: 1 } },
+    const cpp = { "CHIRPS": "#2a78d6", "IDEAM (kriging sin la estación)": "#52514e", "ERA5-Land": "#eb6834", "ERA5": "#1baf7a" };
+    const tr = ks.map((k, i) => ({ type: "scatter", mode: "markers", x: d.obs, y: d[k], text: d.est,
+      name: `${k.split(" (")[0]} · RMSE ${d.met[k][0].toLocaleString("es")} · r ${d.met[k][1]}`,
+      marker: { size: 6, color: cpp[k], opacity: .65, line: { color: v("--bg"), width: 1 } },
       hovertemplate: `<b>%{text}</b><br>medida %{x:,.0f} mm · ${k} %{y:,.0f} mm<extra></extra>` }));
-    tr.push({ type: "scatter", mode: "lines", x: [300, 30000], y: [300, 30000], line: { color: ink, width: 1 }, hoverinfo: "skip" });
-    const L = lay({ xaxis: ax("P medida en la estación (mm/año)", { type: "log", range: [Math.log10(700), Math.log10(5000)] }),
+    tr.push({ type: "scatter", mode: "lines", x: [300, 30000], y: [300, 30000], line: { color: ink, width: 1 }, hoverinfo: "skip", showlegend: false });
+    const L = lay({ showlegend: true, xaxis: ax("P medida en la estación (mm/año)", { type: "log", range: [Math.log10(700), Math.log10(5000)] }),
       yaxis: ax("P del producto en la celda (mm/año)", { type: "log", range: [Math.log10(700), Math.log10(30000)] }),
       margin: { l: 60, r: 12, t: 46, b: 40 } });
     L.updatemenus = [{ type: "buttons", direction: "right", x: 0, xanchor: "left", y: 1.13, yanchor: "top", bgcolor: v("--bg"),
