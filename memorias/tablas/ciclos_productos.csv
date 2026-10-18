@@ -1,0 +1,49 @@
+﻿región,mes,IDEAM,CHIRPS,ERA5-Land,ERA5
+Cuenca,Ene,121.21,115.95,360.62,361.45
+Cuenca,Feb,119.79,118.26,382.52,383.07
+Cuenca,Mar,168.85,165.88,489.39,486.38
+Cuenca,Abr,217.61,223.99,592.23,587.3
+Cuenca,May,211.98,220.62,595.91,590.83
+Cuenca,Jun,139.17,143.04,519.29,526.44
+Cuenca,Jul,114.97,114.85,494.09,510.96
+Cuenca,Ago,113.82,117.41,496.35,510.72
+Cuenca,Sep,166.45,165.9,536.71,536.07
+Cuenca,Oct,240.35,246.54,560.13,553.54
+Cuenca,Nov,227.77,232.45,512.66,508.52
+Cuenca,Dic,155.83,161.33,421.3,420.7
+Alto Cauca,Ene,200.15,188.09,308.11,292.82
+Alto Cauca,Feb,177.25,168.94,300.12,285.76
+Alto Cauca,Mar,214.37,215.04,389.27,369.69
+Alto Cauca,Abr,237.84,244.18,440.75,418.68
+Alto Cauca,May,201.84,208.58,396.01,369.07
+Alto Cauca,Jun,124.91,116.21,334.38,305.67
+Alto Cauca,Jul,102.33,81.33,324.13,294.48
+Alto Cauca,Ago,88.05,76.99,314.51,285.19
+Alto Cauca,Sep,138.72,130.93,349.09,312.98
+Alto Cauca,Oct,263.94,268.17,427.67,395.67
+Alto Cauca,Nov,295.76,296.55,399.33,377.45
+Alto Cauca,Dic,243.11,238.78,348.66,329.26
+Valle del Cauca,Ene,117.0,110.11,453.61,448.57
+Valle del Cauca,Feb,111.67,111.68,463.67,460.67
+Valle del Cauca,Mar,161.79,161.33,555.1,548.35
+Valle del Cauca,Abr,200.62,208.34,665.99,653.64
+Valle del Cauca,May,170.34,180.9,643.39,630.4
+Valle del Cauca,Jun,98.61,105.64,573.0,570.46
+Valle del Cauca,Jul,74.06,76.51,551.53,557.77
+Valle del Cauca,Ago,70.13,75.6,554.61,562.15
+Valle del Cauca,Sep,121.77,124.99,597.19,593.33
+Valle del Cauca,Oct,208.16,216.77,617.28,605.17
+Valle del Cauca,Nov,208.11,212.79,590.33,579.06
+Valle del Cauca,Dic,142.36,149.06,513.31,505.82
+Cauca medio,Ene,99.49,98.09,284.7,296.72
+Cauca medio,Feb,109.04,108.2,328.28,337.3
+Cauca medio,Mar,160.96,154.28,456.46,462.63
+Cauca medio,Abr,227.99,233.03,568.11,576.24
+Cauca medio,May,257.04,264.38,614.02,624.06
+Cauca medio,Jun,184.49,189.34,526.23,554.87
+Cauca medio,Jul,160.11,164.3,492.39,535.19
+Cauca medio,Ago,166.08,172.6,497.74,533.29
+Cauca medio,Sep,220.33,218.38,537.76,552.0
+Cauca medio,Oct,264.85,269.26,546.4,553.68
+Cauca medio,Nov,225.12,231.08,472.06,480.92
+Cauca medio,Dic,140.64,148.18,352.97,365.45

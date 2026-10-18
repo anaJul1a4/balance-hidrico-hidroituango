@@ -1,0 +1,4 @@
+﻿producto,resolución (°),unidades,inicio,fin,meses,meses completos en la cuenca,celdas en la cuenca,fuente del archivo
+CHIRPS,0.0500030517578125,mm/month,1981-01,2025-12,540,540,1171,CHIRPS v2.0 (IRI Data Library)
+ERA5-Land,0.09999999999999432,mm/month,1981-01,2025-12,540,540,294,ERA5-Land (Drive del curso)
+ERA5,0.25,mm/month,1981-01,2025-12,540,540,46,ERA5 (Drive del curso)

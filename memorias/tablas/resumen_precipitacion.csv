@@ -1,0 +1,13 @@
+﻿,valor
+Método final,Kriging ordinario (gaussiano)
+P media cuenca (mm/año),1985.2040960599866
+P media cuenca IDW (mm/año),1981.542703866205
+P media cuenca Kriging (mm/año),1985.2040960599861
+P mín (mm/año),872.063403243653
+P máx (mm/año),3440.7618252612256
+Volumen anual (km³),71.45101895594901
+Caudal equivalente (m³/s),2264.146163077959
+Desv. est. kriging media (mm),300.4110515322632
+N estaciones,266
+P media cuenca incluyendo Briceño (mm/año),1992.546803525352
+Variograma gaussiano: pepita / meseta parcial / rango (km),71849 / 266389 / 66.3
