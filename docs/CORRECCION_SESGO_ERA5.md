@@ -45,6 +45,54 @@ ERA5 para 1981–2010.
 El escalamiento corrige la media y el ciclo, pero no lo que ERA5 hace mal en el tiempo: ubica peor los años húmedos y secos y
 subestima la variabilidad interanual. Sus anomalías mensuales se correlacionan apenas 0,63–0,66 con las de CHIRPS.
 
+## ¿Es la resolución? Prueba directa (`codigo/27_sensibilidad_resolucion.py`)
+
+| Precipitación usada en el balance | P (mm/año) | Error en el cierre |
+|---|---|---|
+| IDEAM a 90 m (base) | 1985 | −5,3 % |
+| IDEAM degradado a 0,25° (celda de ERA5) | 1985 | −5,6 % |
+| IDEAM degradado a 0,1° (celda de ERA5-Land) | 1985 | −5,4 % |
+| ERA5 → 90 m, vecino más cercano / bilineal | 5976 / 5972 | +392 % / +391 % |
+
+Las dos pruebas apuntan a lo mismo:
+
+- La lluvia observada, vista con la celda de ERA5, sigue cerrando el balance.
+- Remuestrear ERA5 no cambia su error.
+
+El factor 3 no viene del tamaño de la celda, sino de la lluvia que produce el modelo.
+
+Las unidades también se verificaron. En la Amazonia y los Llanos, ERA5 coincide con CHIRPS (razón de 0,89 a 0,98). La razón crece
+hacia los Andes y llega a ≈ 3 en esta cuenca.
+
+## Mapeo de cuantiles aplicado (`codigo/28_quantile_mapping.py`, `codigo/29_figura_quantile_mapping.py`)
+
+**Cómo se aplicó:**
+- Mapeo de cuantiles empírico, por celda y mes calendario.
+- Referencia: CHIRPS v2.0 promediado en la celda de cada reanálisis. Del IDEAM solo hay normales, no series.
+- Evaluación sin circularidad: se calibró con 1981–1995 y se validó con 1996–2010. El balance se comparó con los caudales observados,
+  que el método no usa.
+
+![Antes y después](../figuras/panel_QM_P_R.png)
+
+| Fuente | P (mm/año) | Error en el cierre | Error abs. medio, 9 estaciones | r espacial con el IDEAM | CV interanual | r anual P–Q (Bolombolo / La Pintada / Pto. Valdivia) |
+|---|---|---|---|---|---|---|
+| IDEAM (kriging) | 1985 | −5,3 % | 4,5 % | — | — | — |
+| CHIRPS v2.0 | 2026 | −2,2 % | 5,3 % | 0,89 | 10,8 % | 0,92 / 0,94 / 0,91 |
+| ERA5 sin corregir | 5976 | +392 % | 447 % | −0,06 | 7,1 % | 0,56 / 0,58 / 0,78 |
+| ERA5 corregido | 2057 | +0,5 % | 6,7 % | 0,81 | 8,7 % | 0,62 / 0,64 / 0,82 |
+| ERA5-Land sin corregir | 5961 | +390 % | 452 % | −0,06 | 7,6 % | 0,58 / 0,59 / 0,79 |
+| ERA5-Land corregido | 2020 | −2,7 % | 5,2 % | 0,88 | 9,6 % | 0,62 / 0,64 / 0,82 |
+
+**Validación (1996–2010):**
+- El sesgo frente a CHIRPS pasa de +184 % a −2,7 % en ERA5 y de +193 % a −1,5 % en ERA5-Land.
+- La correlación mensual sube de 0,71–0,76 a 0,91.
+
+**Qué corrige y qué no:**
+- Corrige la media, el ciclo (máximo en octubre), el patrón espacial y el balance.
+- Pero todo eso viene de la referencia: el ERA5 corregido es, en esencia, CHIRPS visto con la celda del reanálisis.
+- Lo único propio de ERA5 que sobrevive es la secuencia temporal, que sigue siendo débil: r de 0,62–0,82 con el caudal anual, frente a
+  0,91–0,94 de CHIRPS.
+
 ## Recomendación
 
 1. **Para un balance de largo plazo**, corregir ERA5 no aporta nada: el resultado es, por construcción, la climatología de las

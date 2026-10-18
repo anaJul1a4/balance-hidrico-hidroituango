@@ -321,9 +321,11 @@ ERA = [
         "consistente la lluvia de las estaciones del IDEAM en la cuenca del Sinú, aunque mucho menos que aquí, porque el Sinú es una "
         "cuenca de llanura.", "bullet", hl=True),
     par("La resolución por sí sola no explica el exceso, porque promediar en celdas grandes suaviza los extremos en lugar de "
-        "amplificarlos. El sesgo surge de la física del modelo sobre una topografía mal representada, y persiste porque no hay "
-        "estaciones que lo corrijan. Para usar estos productos en la cuenca habría que corregir su sesgo con las estaciones, por "
-        "ejemplo con un mapeo de cuantiles; en este trabajo se evaluaron sin corregir, como pide el enunciado.", hl=True)]
+        "amplificarlos. Se comprobó directamente: el campo del IDEAM degradado a la celda de ERA5 (0.25°) conserva su media "
+        "(1985 mm/año) y su balance sigue cerrando (−5.6 % frente a −5.3 % a 90 m), y llevar ERA5 a 90 m por interpolación "
+        "bilineal en lugar de vecino más cercano no cambia su error (+391 % frente a +392 %). El sesgo surge de la física del "
+        "modelo sobre una topografía mal representada, y persiste porque no hay estaciones que lo corrijan. En la sección 12 se "
+        "evalúa su corrección por mapeo de cuantiles.", hl=True)]
 despues(p_era, ERA)
 borrar(p_era)
 
@@ -393,8 +395,81 @@ texto(p_res, seg("CHIRPS reproduce el ciclo del IDEAM casi exactamente", "porque
       .replace("(Tabla 19 y Figuras 19 y 20)", "(Tabla ==17== y Figuras 19 y 20)"))
 antes(img19, [p_res._p])
 leyenda(P("Tabla 17. Métricas del ciclo anual"), "Tabla 17. Métricas del ciclo anual de cada producto frente al IDEAM (n = 12).")
-texto(P("Una limitación de esta evaluación es que el ciclo"), seg("En conjunto, CHIRPS es el mejor producto para esta cuenca",
-                                                                  "y en ella CHIRPS también cierra."))
+p_fin12 = P("Una limitación de esta evaluación es que el ciclo")
+texto(p_fin12, seg("En conjunto, CHIRPS es el mejor producto para esta cuenca", "y en ella CHIRPS también cierra."))
+
+# ---- corrección del sesgo de ERA5 por mapeo de cuantiles (análisis adicional, en amarillo)
+FIGS = Path(__file__).resolve().parents[1] / "resultados" / "informe_figs"
+
+
+def figura_nueva(nombre, ancho_cm):
+    from docx.shared import Cm
+    from PIL import Image
+    tmp = Path(__file__).parent / "_tmp_qm.png"
+    Image.open(FIGS / nombre).convert("RGB").save(tmp, "PNG")
+    p = doc.add_paragraph(); p.add_run().add_picture(str(tmp), width=Cm(ancho_cm)); tmp.unlink()
+    p._p.insert(0, parse_xml(f'<w:pPr {nsdecls("w")}><w:keepNext w:val="1"/><w:spacing w:after="60" w:before="240" w:lineRule="auto"/>'
+                             f'<w:jc w:val="center"/></w:pPr>'))
+    return p._p
+
+
+def leyenda_nueva(txt, tabla=False):
+    n, resto = txt.split(". ", 1)
+    pp = ('<w:keepNext w:val="1"/><w:spacing w:after="120" w:before="240" w:lineRule="auto"/><w:jc w:val="both"/>' if tabla else
+          '<w:spacing w:after="240" w:lineRule="auto"/><w:jc w:val="center"/>')
+    return parse_xml(f'<w:p {nsdecls("w")}><w:pPr>{pp}</w:pPr>{runs(n + ". ", b=True, i=tabla, sz=18, hl=True)}'
+                     f'{runs(resto, i=tabla, sz=18, hl=True)}</w:p>')
+
+
+def tabla_nueva(filas, enc, anchos):
+    tot = 8910; w = [round(a / sum(anchos) * tot) for a in anchos]
+    bord = "".join(f'<w:{s} w:color="bfbfbf" w:space="0" w:sz="5" w:val="single"/>' for s in ("top", "left", "bottom", "right"))
+    trs = []
+    for k, f in enumerate([enc] + filas):
+        tcs = "".join(f'<w:tc><w:tcPr><w:tcW w:w="{w[j]}" w:type="dxa"/><w:tcBorders>{bord}</w:tcBorders><w:vAlign w:val="center"/></w:tcPr>'
+                      f'<w:p><w:pPr><w:spacing w:after="40" w:before="40" w:lineRule="auto"/><w:jc w:val="{"left" if j == 0 and k else "center"}"/>'
+                      f'</w:pPr>{runs(str(v), b=(k == 0), sz=17, hl=True)}</w:p></w:tc>' for j, v in enumerate(f))
+        trs.append(f'<w:tr><w:trPr><w:cantSplit w:val="1"/></w:trPr>{tcs}</w:tr>')
+    return parse_xml(f'<w:tbl {nsdecls("w")}><w:tblPr><w:tblW w:w="{tot}" w:type="dxa"/><w:jc w:val="center"/><w:tblLayout w:type="fixed"/>'
+                     f'</w:tblPr><w:tblGrid>{"".join(f"<w:gridCol w:w=\"{x}\"/>" for x in w)}</w:tblGrid>{"".join(trs)}</w:tbl>')
+
+
+QM = [
+    par("**Corrección del sesgo de ERA5 y ERA5-Land por mapeo de cuantiles (análisis adicional)**", hl=True),
+    par("Para saber si los reanálisis pueden usarse una vez corregidos, se aplicó un mapeo de cuantiles empírico (Gudmundsson et "
+        "al., 2012), celda a celda y por mes calendario: cada valor mensual de ERA5 se reemplaza por el valor de la referencia que "
+        "ocupa el mismo cuantil en la distribución de ese mes. Del IDEAM solo se tienen las normales 1981–2010, no series mensuales "
+        "por estación, así que se usó como referencia CHIRPS v2.0, que está corregido con estaciones, promediado en la celda de cada "
+        "reanálisis. El método corrige toda la distribución (media, varianza y extremos), pero conserva el orden de los valores de "
+        "ERA5 en cada mes, así que no corrige el momento en que llueve. Para evaluarlo sin circularidad se calibró con 1981–1995 y "
+        "se validó con 1996–2010, y el balance se comparó con los caudales observados, que el método no usa.", hl=True),
+    figura_nueva("panel_QM_P_R.png", 16.0),
+    leyenda_nueva("Figura 21. Precipitación media anual (arriba) y escorrentía de largo plazo R = P − ETR (abajo) de ERA5 y ERA5-Land "
+                  "sin corregir y corregidas por mapeo de cuantiles (1981–2010), con la ETP de Hargreaves y Budyko celda a celda."),
+    leyenda_nueva("Tabla 18. Balance y variabilidad de la precipitación de ERA5 y ERA5-Land antes y después del mapeo de cuantiles "
+                  "(1981–2010).", tabla=True),
+    tabla_nueva([
+        ["IDEAM (kriging)", "1985", "−5.3", "4.5", "—", "—", "—"],
+        ["CHIRPS v2.0", "2026", "−2.2", "5.3", "0.89", "10.8", "0.92 / 0.94 / 0.91"],
+        ["ERA5 sin corregir", "5976", "+392", "447", "−0.06", "7.1", "0.56 / 0.58 / 0.78"],
+        ["ERA5 corregido", "2057", "+0.5", "6.7", "0.81", "8.7", "0.62 / 0.64 / 0.82"],
+        ["ERA5-Land sin corregir", "5961", "+390", "452", "−0.06", "7.6", "0.58 / 0.59 / 0.79"],
+        ["ERA5-Land corregido", "2020", "−2.7", "5.2", "0.88", "9.6", "0.62 / 0.64 / 0.82"]],
+        ["Fuente", "P (mm/año)", "Error en el cierre (%)", "Error absoluto medio, 9 estaciones (%)", "r espacial con el IDEAM",
+         "CV interanual (%)", "r anual P–Q (Bolombolo / La Pintada / Pto. Valdivia)"], [3.2, 1.6, 1.8, 2.2, 1.8, 1.6, 3.6]),
+    par("En la validación (1996–2010, años no usados en la calibración), el sesgo frente a CHIRPS pasa de +184 % a −2.7 % en ERA5 "
+        "y de +193 % a −1.5 % en ERA5-Land, y la correlación mensual sube de 0.71–0.76 a 0.91. Con la corrección completa, el balance "
+        "cierra con +0.5 % (ERA5) y −2.7 % (ERA5-Land), el error en las estaciones queda en 5–7 %, como con el IDEAM y CHIRPS, el "
+        "ciclo anual coincide con el del IDEAM (máximo en octubre) y el patrón espacial se recupera (r = 0.81 y 0.88). La escorrentía media pasa de unos 4670 mm/año a 924–955 mm/año, "
+        "cerca de los 950 mm/año observados (Figura 21).",
+        hl=True),
+    par("Sin embargo, casi todo lo que se corrige viene de la referencia: la media, el ciclo y el patrón espacial corregidos son, "
+        "en esencia, los de CHIRPS vistos con la celda del reanálisis. La única información propia de ERA5 que sobrevive es la "
+        "secuencia temporal, y esa sigue siendo débil. Corregida, su lluvia anual se correlaciona con el caudal anual solo entre "
+        "0.62 y 0.82, frente a 0.91–0.94 de CHIRPS, y su variabilidad interanual sigue siendo menor que la observada (CV de 9 % "
+        "frente a 11 %). El mapeo de cuantiles vuelve utilizable a ERA5 cuando se necesitan sus otras variables o series en tiempo "
+        "casi real, pero para el balance hídrico de esta cuenca no supera a CHIRPS.", hl=True)]
+despues(p_fin12, QM)
 
 # ============================================================================= decisiones: el equipo las dejó en los repositorios
 h_dec = P("Decisiones metodológicas y análisis adicionales")
@@ -421,7 +496,9 @@ CONC = [
     "CHIRPS v2.0 es el producto más adecuado para esta cuenca: +2 % de lluvia, cierre de −2.2 % y r = 0.998 en el ciclo anual. ERA5 y "
     "ERA5-Land triplican la lluvia, con máximos de hasta 20 000 mm/año que superan los registros más altos del país, porque su "
     "precipitación proviene de un modelo que no se calibra con estaciones y que no resuelve la topografía de dos cordilleras y un "
-    "valle interandino. No deben usarse sin corregir su sesgo.",
+    "valle interandino. No deben usarse sin corregir su sesgo. Un mapeo de cuantiles con CHIRPS como referencia corrige su media, "
+    "su ciclo y su patrón espacial (cierre de +0.5 % y −2.7 %), pero no su variabilidad interanual: la lluvia corregida se "
+    "correlaciona con el caudal anual solo entre 0.62 y 0.82, frente a 0.91–0.94 de CHIRPS.",
     "La lluvia es bimodal en casi toda la cuenca, con la temporada principal en octubre-noviembre y el estiaje más severo en "
     "julio-agosto, lo que define dos periodos críticos al año para la operación del embalse."]
 ancla = despues(h_con, [par(t, "bullet", hl=True) for t in CONC])
@@ -484,6 +561,9 @@ REFS = [
     "along the drainage network of Colombia. *Journal of Hydrologic Engineering*, 12(1), 4–13.",
     "Ramírez, V. H., Mejía, A., Marín, E. V. y Arango, R. (2011). Evaluation of models for estimating the reference evapotranspiration in "
     "Colombian coffee zone. *Agronomía Colombiana*, 29(1), 107–114.",
+    "Gudmundsson, L., Bremnes, J. B., Haugen, J. E. y Engen-Skaugen, T. (2012). Technical Note: Downscaling RCM precipitation to the "
+    "station scale using statistical transformations – a comparison of methods. *Hydrology and Earth System Sciences*, 16, "
+    "3383–3390.",
     "Taylor, K. E. (2001). Summarizing multiple aspects of model performance in a single diagram. *Journal of Geophysical Research*, "
     "106(D7), 7183–7192.",
     "Vega-Durán, J., Escalante-Castro, B., Canales, F. A., Acuña, G. J. y Kaźmierczak, B. (2021). Evaluation of areal monthly average "

@@ -62,7 +62,7 @@ S["p11"] = ("11. Mapas de precipitación por producto", abajo(
 celda de 90 m de la cuenca tomó el valor de la celda del producto que la contiene (vecino más cercano, sin suavizar).</p>
 {dec([("Sin interpolar los productos", "el mapa muestra la resolución real de cada uno (5.5, 11 y 28 km); suavizar daría un detalle que el producto no tiene"),
       ("Misma grilla de 90 m que la ETP", "el punto 12 repite el balance celda a celda cambiando sólo la precipitación"),
-      ("Escala de color común por variable", "cada valor tiene el mismo color en todos los mapas de P (naranja → amarillo → verde → azul, como los mapas de Balances 1999): 1000 mm es el mismo tono en IDEAM, CHIRPS y ERA5. Cada barra llega sólo hasta el máximo de su mapa")])}
+      ("Escala de color común por variable", "cada valor tiene el mismo color en todos los mapas de P (rojo en lo seco, amarillo y azul en lo lluvioso): 1000 mm es el mismo tono en IDEAM, CHIRPS y ERA5. Cada barra llega sólo hasta el máximo de su mapa")])}
 {tabla(t11, "Comparación con la precipitación de estaciones IDEAM", {"P media (mm/año)": ",.0f", "Mínimo (mm/año)": ",.0f", "Máximo (mm/año)": ",.0f",
                                                                    "Diferencia con IDEAM (%)": "+.0f", "Correlación espacial con IDEAM": ".2f"})}
 <h3>Análisis</h3>

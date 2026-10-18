@@ -527,7 +527,7 @@ S["p11"] = ("11. Mapas de precipitación por producto", abajo(
 celda de 90 m de la cuenca tomó el valor de la celda del producto que la contiene (vecino más cercano, sin suavizar).</p>
 {dec([("Sin interpolar los productos", "el mapa muestra la resolución real de cada uno (5.5, 11 y 28 km); suavizar daría un detalle que el producto no tiene"),
       ("Misma grilla de 90 m que la ETP", "el punto 12 repite el balance celda a celda cambiando sólo la precipitación"),
-      ("Escala de color común por variable", "cada valor tiene el mismo color en todos los mapas de P (naranja → amarillo → verde → azul, como los mapas de Balances 1999): 1000 mm es el mismo tono en IDEAM, CHIRPS y ERA5. Cada barra llega sólo hasta el máximo de su mapa")])}
+      ("Escala de color común por variable", "cada valor tiene el mismo color en todos los mapas de P (rojo en lo seco, amarillo y azul en lo lluvioso): 1000 mm es el mismo tono en IDEAM, CHIRPS y ERA5. Cada barra llega sólo hasta el máximo de su mapa")])}
 {tabla(t11, "Comparación con la precipitación de estaciones IDEAM", {"P media (mm/año)": ",.0f", "Mínimo (mm/año)": ",.0f", "Máximo (mm/año)": ",.0f",
                                                                    "Diferencia con IDEAM (%)": "+.0f", "Correlación espacial con IDEAM": ".2f"})}
 <h3>Análisis</h3>
@@ -655,6 +655,51 @@ ser la versión publicada y porque cierra el balance con los caudales observados
 </div></div>
 {figura("12_balance_productos/chirps_v2/panel_chirps_v2_v3.png", "p12_chirps_v2", "CHIRPS v3.0 frente a v2.0",
         "Precipitación media anual 1981–2010 de cada versión en su resolución original y diferencia relativa entre ellas.", 2200)}""")
+
+# ----------------------------------------------------------------------------- corrección del sesgo de ERA5 (28 y 29)
+QMD = RES / "17_quantile_mapping"
+if (QMD / "metricas_qm.csv").exists() and (RES / "informe_figs" / "panel_QM_P_R.png").exists():
+    _bq = pd.read_csv(QMD / "balance_qm.csv", dtype={"codigo": str})
+    _mq = pd.read_csv(QMD / "metricas_qm.csv")
+    _cie = _bq[_bq.codigo == "HIDRO"].set_index("campo")
+    _mae = _bq[_bq.codigo != "HIDRO"].groupby("campo")["error_%"].apply(lambda e: e.abs().mean())
+    _met = _mq.dropna(subset=["CV interanual (%)"]).set_index("prueba")
+    tq = pd.DataFrame({
+        "P (mm/año)": _cie["P"], "Error en el cierre (%)": _cie["error_%"], "Error absoluto medio, 9 estaciones (%)": _mae,
+        "CV interanual (%)": [_met.loc[k, "CV interanual (%)"] for k in _cie.index],
+        "r anual P–Q Bolombolo": [_met.loc[k, "r anual P–Q Bolombolo"] for k in _cie.index],
+        "r anual P–Q Pto. Valdivia": [_met.loc[k, "r anual P–Q Puerto Valdivia"] for k in _cie.index]})
+    _ch = _met.loc["referencia"]
+    tq.loc["CHIRPS v2.0 (referencia)"] = [t12.loc["CHIRPS v2.0", "P anual (mm/año)"], t12.loc["CHIRPS v2.0", "Error (%)"], 5.3,
+                                          _ch["CV interanual (%)"], _ch["r anual P–Q Bolombolo"], _ch["r anual P–Q Puerto Valdivia"]]
+    tq.index.name = "Fuente"
+    _val = _mq[_mq.prueba.str.startswith("validación")].set_index("producto")
+    S["p12"] = (S["p12"][0], S["p12"][1] + f"""
+<h3>Corrección del sesgo de ERA5 y ERA5-Land por mapeo de cuantiles (análisis adicional)</h3>
+{figura("informe_figs/panel_QM_P_R.png", "p12_qm", "Precipitación y escorrentía de los reanálisis antes y después de corregir el sesgo",
+        "Fila superior: P media anual 1981–2010; fila inferior: R = P − ETR con la ETP de Hargreaves y Budyko celda a celda. Mismas escalas de "
+        "color por variable que el resto de la página.", 2200)}
+<div class="dos"><div>
+<h3>Metodología</h3>
+<p>Mapeo de cuantiles empírico, celda a celda y por mes calendario: cada valor mensual del reanálisis se reemplaza por el valor de la
+referencia que ocupa el mismo cuantil en la distribución de ese mes. Del IDEAM sólo hay normales, no series, así que la referencia es
+<b>CHIRPS v2.0</b> (corregido con estaciones) promediado en la celda de cada reanálisis. Se calibró con 1981–1995 y se validó con
+1996–2010; el balance se contrastó con los caudales observados, que el método no usa.</p>
+<p>Antes se comprobó que la resolución no explica el sesgo: el IDEAM degradado a la celda de ERA5 (0.25°) sigue cerrando el balance
+(−5.6 %), y remuestrear ERA5 a 90 m de forma bilineal no cambia su error (+391 %).</p>
+</div><div>
+<h3>Análisis</h3>
+<p>En la validación, el sesgo frente a CHIRPS pasa de {_val.loc['ERA5', 'sesgo crudo vs CHIRPS (%)']:+.0f} % a
+{_val.loc['ERA5', 'sesgo corregido vs CHIRPS (%)']:+.1f} % (ERA5) y de {_val.loc['ERA5-Land', 'sesgo crudo vs CHIRPS (%)']:+.0f} % a
+{_val.loc['ERA5-Land', 'sesgo corregido vs CHIRPS (%)']:+.1f} % (ERA5-Land). Corregidos, cierran el balance como el IDEAM y CHIRPS,
+recuperan el ciclo (máximo en octubre) y el patrón espacial.</p>
+<p>Pero casi todo lo corregido viene de la referencia. Lo único propio del reanálisis que sobrevive es la secuencia temporal, y sigue
+siendo débil: su lluvia anual se correlaciona con el caudal anual mucho menos que CHIRPS. Para el balance de esta cuenca, el mapeo de
+cuantiles vuelve utilizable a ERA5 pero no lo hace mejor que CHIRPS.</p>
+</div></div>
+{tabla(tq, "Balance y variabilidad antes y después del mapeo de cuantiles (1981–2010)",
+       {"P (mm/año)": ",.0f", "Error en el cierre (%)": "+.1f", "Error absoluto medio, 9 estaciones (%)": ",.1f", "CV interanual (%)": ".1f",
+        "r anual P–Q Bolombolo": ".2f", "r anual P–Q Pto. Valdivia": ".2f"})}""")
 
 ci = pd.read_csv(RES / "13_climatologia" / "ciclo_anual.csv", index_col=0)
 cr = pd.read_csv(RES / "13_climatologia" / "ciclo_regiones.csv", index_col=0)

@@ -1,0 +1,9 @@
+﻿producto,estado,variable,media (mm/año),mín,máx
+ERA5,sin corregir,P,5976.0,1833.0,18313.0
+ERA5,sin corregir,R,4678.0,766.0,17460.0
+ERA5,mapeo de cuantiles,P,2057.0,1238.0,5028.0
+ERA5,mapeo de cuantiles,R,955.0,243.0,4127.0
+ERA5-Land,sin corregir,P,5961.0,1681.0,20177.0
+ERA5-Land,sin corregir,R,4659.0,630.0,19024.0
+ERA5-Land,mapeo de cuantiles,P,2020.0,1075.0,3889.0
+ERA5-Land,mapeo de cuantiles,R,924.0,169.0,2960.0

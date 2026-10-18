@@ -3,7 +3,7 @@ Escalas de color por variable. Cada variable tiene una paleta y unas clases fija
 mismo tono en todos los mapas de esa variable. La barra de color de cada mapa se corta en la clase máxima de sus datos (no se
 dibujan colores que el mapa no usa) y empieza siempre en 0 (blanco en ETP, ETR y R).
 
-    P anual (mm/año)      naranja → amarillo → verde → azul pizarra (Balances 1999)   puntos 3, 11, 12 y CHIRPS v2/v3
+    P anual (mm/año)      rojo (seco) → amarillo → azul (lluvioso), RdYlBu   puntos 3, 11, 12 y CHIRPS v2/v3
     P mensual (mm/mes)    la misma paleta, clases en mm/mes                       punto 13
     ETP (mm/año)          blanco → amarillo → rojo (YlOrRd)                        punto 6
     ETR (mm/año)          blanco → verdes (YlGn), mismas clases que la ETP         punto 7
@@ -43,8 +43,11 @@ PM_CL = [0, 25, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 500]
 ET_CL = [0, 300, 500, 700, 900, 1100, 1300, 1500, 1700, 1900, 2100]
 R_CL = [0, 250, 500, 750, 1000, 1500, 2000, 2500, 3000, 5000, 8000, 12000, 20000]
 
-P = _esc(_balances(len(P_CL) - 1), P_CL)
-PM = _esc(_balances(len(PM_CL) - 1), PM_CL)
+# sequía en rojo, lluvia en azul (RdYlBu, sin verdes); el amarillo central queda en 1500–2500 mm, alrededor de la media de la
+# cuenca, y los azules oscuros se reservan para los extremos de los reanálisis
+_POS_P = [0.0, 0.1, 0.2, 0.32, 0.45, 0.58, 0.66, 0.72, 0.78, 0.85, 0.92, 1.0]
+P = _esc(ListedColormap(plt.get_cmap("RdYlBu")(_POS_P)), P_CL)
+PM = _esc(plt.get_cmap("RdYlBu", len(PM_CL) - 1), PM_CL)
 ETP = _esc(_desde_blanco("YlOrRd", len(ET_CL) - 1), ET_CL)
 ETR = _esc(_desde_blanco("YlGn", len(ET_CL) - 1), ET_CL)
 R = _esc(_desde_blanco("GnBu", len(R_CL) - 1), R_CL)         # escorrentía: verde-azul, distinta de la lluvia

@@ -104,7 +104,8 @@ lluvioso del país. Ver [`CORRECCION_SESGO_ERA5.md`](CORRECCION_SESGO_ERA5.md).
 | Escalamiento lineal de ERA5 (prueba posterior) | Sí | Corrige la media, no la variabilidad interanual |
 | EOF/ACP, análisis espectral singular, Fourier, ondículas | No | Se trabaja con climatologías de 30 años; el ENSO se evaluó con compuestos |
 | Correlación no lineal, regresión logística, KNN | No | Spearman bastó para P–Z; no hay variable binaria; el relleno ya tenía NSE ≥ 0,80 |
-| Mapeo de cuantiles | No | El enunciado pide evaluar los productos sin corregir |
+| Mapeo de cuantiles de ERA5 y ERA5-Land (referencia CHIRPS, validado 1996–2010) | Sí, como análisis adicional | Cierre de +0,5 % y −2,7 %, pero la correlación con el caudal anual queda en 0,62–0,82 (CHIRPS 0,91–0,94) |
+| Sensibilidad a la resolución (IDEAM degradado a 0,25° y 0,1°; ERA5 bilineal) | Sí | La resolución no explica el sesgo (cierre del IDEAM a 0,25°: −5,6 %) |
 
 ## Lecciones y problemas resueltos
 

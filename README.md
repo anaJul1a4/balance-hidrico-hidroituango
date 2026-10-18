@@ -36,8 +36,13 @@ En el cierre, el balance difiere del caudal observado en −5,3 %. En las nueve 
 | ERA5-Land | 5961 | +200 % | −0,06 | +390 % | 0,69 |
 | ERA5 | 5976 | +201 % | −0,06 | +392 % | 0,62 |
 
-CHIRPS v2.0 es el producto adecuado para esta cuenca. ERA5 y ERA5-Land triplican la lluvia, con máximos de hasta 20 000 mm/año, por
-dos razones: no asimilan pluviómetros y su resolución no representa el valle interandino.
+CHIRPS v2.0 es el producto adecuado para esta cuenca. ERA5 y ERA5-Land triplican la lluvia, con máximos de hasta 20 000 mm/año,
+porque no asimilan pluviómetros y su física no resuelve el valle interandino. No es un problema de resolución: el IDEAM degradado a
+la celda de ERA5 sigue cerrando el balance (−5,6 %).
+
+Con un mapeo de cuantiles (referencia CHIRPS, validado en 1996–2010), los dos reanálisis cierran el balance (+0,5 % y −2,7 %). Aun
+así, su lluvia anual se correlaciona con el caudal mucho menos que CHIRPS (0,62–0,82 frente a 0,91–0,94). Ver
+[`docs/CORRECCION_SESGO_ERA5.md`](docs/CORRECCION_SESGO_ERA5.md).
 
 **Clima y caudales**
 
@@ -55,7 +60,7 @@ dos razones: no asimilan pluviómetros y su resolución no representa el valle i
 | `memorias/tablas/` | Tablas de resultados en CSV (morfometría, validación cruzada, regresiones, balances, métricas) |
 | `datos/` | Caudales mensuales del IDEAM procesados (1981–2010 y registro completo) y priorización de estaciones |
 | `figuras/` | Figuras del informe en alta resolución |
-| `codigo/` | Scripts de Python, numerados en el orden de ejecución (01 a 26) |
+| `codigo/` | Scripts de Python, numerados en el orden de ejecución (01 a 30) |
 
 ## Cómo reproducir
 
@@ -67,8 +72,8 @@ dos razones: no asimilan pluviómetros y su resolución no representa el valle i
    - CHIRPS v2.0 (IRI Data Library).
    - ERA5 y ERA5-Land (Copernicus Climate Data Store).
 3. Los scripts esperan esta estructura: `HIDROITUANGO/trabajo1/{scripts,datos,resultados}`, con los datos del curso en
-   `HIDROITUANGO/`. Se ejecutan en orden: 01 (delimitación) … 21 (figuras complementarias). El 13 genera la página; del 22 al 26
-   generan el informe y sus figuras.
+   `HIDROITUANGO/`. Se ejecutan en orden: 01 (delimitación) … 21 (figuras complementarias) y 27–29 (corrección de ERA5). El 13 genera la
+   página; del 22 al 26 y el 30 generan el informe, sus figuras y el documento de cambios.
 
 | Scripts | Paso |
 |---|---|
@@ -79,6 +84,7 @@ dos razones: no asimilan pluviómetros y su resolución no representa el valle i
 | 11–12 | ETP (Hargreaves-Samani), ETR (Budyko) y balance por área de drenaje |
 | 14–18, 20 | Productos de precipitación: cobertura, mapas, balance, climatología y comparación de ciclos; sensibilidad CHIRPS v2/v3 |
 | 21 | Figuras complementarias (pisos térmicos, punto a píxel, estacionalidad, P necesaria) |
+| 27–29 | Sensibilidad a la resolución y corrección del sesgo de ERA5 por mapeo de cuantiles |
 | `escalas.py` | Escalas de color por variable, comunes a todos los mapas |
 | `productos.py` | Lectura homogénea de CHIRPS, ERA5 y ERA5-Land |
 | `priority_flood.py` | Relleno de depresiones Priority-Flood + ε (Barnes et al., 2014), en numba |
