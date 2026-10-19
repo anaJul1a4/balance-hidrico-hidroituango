@@ -51,7 +51,7 @@ t11 = r11[["P media cuenca (mm/año)", "mínimo (mm/año)", "máximo (mm/año)",
 t11.columns = ["P media (mm/año)", "Mínimo (mm/año)", "Máximo (mm/año)", "Diferencia con IDEAM (%)", "Correlación espacial con IDEAM"]
 t11 = t11.rename(index={"CHIRPS": "CHIRPS v2.0"}); t11.index.name = "1981–2010"
 S["p11"] = ("11. Mapas de precipitación por producto", abajo(
-    figura("informe_figs/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
+    figura("11_mapas_productos/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
            "IDEAM (kriging, punto 3) como referencia y los tres productos en su resolución original, con la misma escala de color.", 2400),
     f"""
 <p class="lead">Precipitación media de la cuenca 1981–2010: IDEAM {fmt(r11.loc['IDEAM (kriging)', 'P media cuenca (mm/año)'])} mm, CHIRPS

@@ -522,7 +522,7 @@ t11 = r11[["P media cuenca (mm/año)", "mínimo (mm/año)", "máximo (mm/año)",
 t11.columns = ["P media (mm/año)", "Mínimo (mm/año)", "Máximo (mm/año)", "Diferencia con IDEAM (%)", "Correlación espacial con IDEAM"]
 t11 = t11.rename(index={"CHIRPS": "CHIRPS v2.0"}); t11.index.name = "1981–2010"
 S["p11"] = ("11. Mapas de precipitación por producto", abajo(
-    figura("informe_figs/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
+    figura("11_mapas_productos/panel_P_productos.png", "p11_panel", "Precipitación media anual multianual 1981–2010",
            "IDEAM (kriging, punto 3) como referencia y los tres productos en su resolución original, con la misma escala de color.", 2400),
     f"""
 <p class="lead">Precipitación media de la cuenca 1981–2010: IDEAM {fmt(r11.loc['IDEAM (kriging)', 'P media cuenca (mm/año)'])} mm, CHIRPS
@@ -664,7 +664,7 @@ ser la versión publicada y porque cierra el balance con los caudales observados
 
 # ----------------------------------------------------------------------------- corrección del sesgo de ERA5 (28 y 29)
 QMD = RES / "17_quantile_mapping"
-if (QMD / "metricas_qm.csv").exists() and (RES / "informe_figs" / "panel_QM_P_R.png").exists():
+if (QMD / "metricas_qm.csv").exists() and (QMD / "QM_P_R_pagina.png").exists():
     _bq = pd.read_csv(QMD / "balance_qm.csv", dtype={"codigo": str})
     _mq = pd.read_csv(QMD / "metricas_qm.csv")
     _cie = _bq[_bq.codigo == "HIDRO"].set_index("campo")
@@ -682,7 +682,7 @@ if (QMD / "metricas_qm.csv").exists() and (RES / "informe_figs" / "panel_QM_P_R.
     _val = _mq[_mq.prueba.str.startswith("validación")].set_index("producto")
     S["p12"] = (S["p12"][0], S["p12"][1] + f"""
 <h3>Corrección del sesgo de ERA5 y ERA5-Land por mapeo de cuantiles (análisis adicional)</h3>
-{figura("informe_figs/panel_QM_P_R.png", "p12_qm", "Precipitación y escorrentía de los reanálisis antes y después de corregir el sesgo",
+{figura("17_quantile_mapping/QM_P_R_pagina.png", "p12_qm", "Precipitación y escorrentía de los reanálisis antes y después de corregir el sesgo",
         "Fila superior: P media anual 1981–2010; fila inferior: R = P − ETR con la ETP de Hargreaves y Budyko celda a celda. Mismas escalas de "
         "color por variable que el resto de la página.", 2200)}
 <div class="dos"><div>
