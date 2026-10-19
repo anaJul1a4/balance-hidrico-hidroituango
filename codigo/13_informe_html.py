@@ -856,6 +856,32 @@ esta cuenca sólo serían útiles con una corrección de sesgo basada en estacio
 </div></div>""")
 
 
+# ----------------------------------------------------------------------------- ciclo anual antes y después del mapeo de cuantiles
+if (QMD / "ciclos_qm.csv").exists():
+    _cq = pd.read_csv(QMD / "ciclos_qm.csv", index_col=0)
+    DATA["cicqm"] = {c: _cq[c].round(1).tolist() for c in _cq.columns}
+    _mt = pd.read_csv(QMD / "metricas_ciclo_qm.csv", index_col=0)
+    _mt = _mt[["Sesgo (%)", "RMSE (mm/mes)", "r", "σ normalizada", "Máximo"]]
+    _mt.index.name = "Frente al IDEAM (n = 12)"
+    S["p14"] = (S["p14"][0], S["p14"][1] + f"""
+<h3>Ciclo anual antes y después de corregir el sesgo</h3>""" +
+        ancho("s_cicqm", "<p><b>Ciclo anual de la cuenca con ERA5 y ERA5-Land sin corregir (izquierda) y corregidos por mapeo de cuantiles "
+                         "(derecha)</b>, frente al IDEAM y a CHIRPS. Cada panel tiene su propia escala vertical: los reanálisis sin corregir "
+                         "llegan a casi 600 mm/mes. El cursor muestra la lluvia de cada mes y su porcentaje del total anual.</p>") + f"""
+<div class="dos"><div>
+<p>Sin corregir, ERA5 y ERA5-Land triplican la lluvia en todos los meses, pero además deforman el ciclo: aplanan la diferencia entre
+temporadas (su mes más seco tiene el 60 % de la lluvia del más húmedo, frente al 47 % observado), ponen el máximo en mayo y el mínimo en
+enero, y casi borran el estiaje de julio-agosto, que en ellos llueve casi tanto como en octubre (88–93 %).</p>
+<p>Corregidos, los dos reproducen el ciclo bimodal del IDEAM: máximo en octubre, segundo pico en abril-mayo y mínimos en enero-febrero y
+julio-agosto, con r = 0.997 y sesgos de +1 a +4 %. El resultado es prácticamente el ciclo de CHIRPS, porque CHIRPS fue la referencia del
+mapeo de cuantiles: la corrección sustituye la distribución mensual de cada reanálisis por la de la referencia, así que su ciclo no
+es una prueba independiente de calidad. Lo único que el reanálisis conserva es el orden de los años dentro de cada mes, y eso se evalúa
+con los caudales (punto 12).</p>
+</div><div>
+{tabla(_mt, "Métricas del ciclo anual antes y después del mapeo de cuantiles (1981–2010)",
+       {"Sesgo (%)": "+.1f", "RMSE (mm/mes)": ".1f", "r": ".3f", "σ normalizada": ".2f"})}
+</div></div>""")
+
 S["ref"] = ("Referencias", """
 <ul class="refs">
 <li>Barnes, R., Lehman, C. y Mulla, D. (2014). Priority-flood: An optimal depression-filling and watershed-labeling algorithm for digital

@@ -216,6 +216,30 @@ const PLOTS = {
           { "yaxis.title.text": "% del total anual", "yaxis.rangemode": "normal" }] }] }];
     Plotly.react(el, abs, L, CFG);
   },
+  s_cicqm(el) {
+    const d = D.cicqm, tot = a => a.reduce((x, y) => x + y, 0);
+    const col = { "IDEAM": v("--ink"), "CHIRPS": "#2a78d6", "ERA5-Land": "#eb6834", "ERA5": "#1baf7a" };
+    const tr = [];
+    const add = (k, nom, c, ax, leg) => tr.push({ type: "scatter", mode: "lines+markers", name: nom, x: MESES, y: d[k], xaxis: ax.x, yaxis: ax.y,
+      showlegend: leg, legendgroup: nom.split(" ")[0], customdata: d[k].map(x => 100 * x / tot(d[k])),
+      line: { color: c, width: nom === "IDEAM" ? 2.6 : 1.8 }, marker: { size: 6, color: c, line: { color: v("--bg"), width: 1 } },
+      hovertemplate: `${k} · %{x}: %{y:.0f} mm (%{customdata:.1f} % del año)<extra></extra>` });
+    const A = { x: "x", y: "y" }, B = { x: "x2", y: "y2" };
+    add("IDEAM", "IDEAM", col.IDEAM, A, true); add("CHIRPS", "CHIRPS", col.CHIRPS, A, true);
+    add("ERA5-Land sin corregir", "ERA5-Land", col["ERA5-Land"], A, true); add("ERA5 sin corregir", "ERA5", col.ERA5, A, true);
+    add("IDEAM", "IDEAM", col.IDEAM, B, false); add("CHIRPS", "CHIRPS", col.CHIRPS, B, false);
+    add("ERA5-Land corregido", "ERA5-Land", col["ERA5-Land"], B, false); add("ERA5 corregido", "ERA5", col.ERA5, B, false);
+    Plotly.react(el, tr, lay({ showlegend: true, margin: { l: 56, r: 12, t: 56, b: 36 },
+      grid: { rows: 1, columns: 2, pattern: "independent", xgap: .1 },
+      xaxis: ax(""), yaxis: ax("Precipitación media mensual (mm)", { rangemode: "tozero" }),
+      xaxis2: ax(""), yaxis2: ax("", { rangemode: "tozero" }),
+      legend: { orientation: "h", x: 0, y: 1.14, yanchor: "bottom", font: { size: 11 } },
+      annotations: [
+        { xref: "x domain", yref: "y domain", x: 0, y: 1.02, xanchor: "left", yanchor: "bottom", showarrow: false,
+          text: "<b>a) Sin corregir</b>", font: { size: 12, color: v("--ink") } },
+        { xref: "x2 domain", yref: "y2 domain", x: 0, y: 1.02, xanchor: "left", yanchor: "bottom", showarrow: false,
+          text: "<b>b) Con mapeo de cuantiles</b>", font: { size: 12, color: v("--ink") } }] }), CFG);
+  },
   s_taylor(el) {
     const t = D.p14.taylor, col = { "CHIRPS": "#2a78d6", "ERA5-Land": "#eb6834", "ERA5": "#1baf7a" }, deg = r => Math.acos(r) * 180 / Math.PI;
     const tr = [];

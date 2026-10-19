@@ -1,0 +1,6 @@
+﻿Fuente,Sesgo (mm/mes),Sesgo (%),RMSE (mm/mes),r,σ normalizada,Máximo,Mínimo,Total anual (mm)
+CHIRPS,2.533,1.522,4.884,0.998,1.062,Oct,Jul,2028.202
+ERA5-Land sin corregir,329.299,197.796,333.466,0.69,1.603,May,Ene,5949.388
+ERA5-Land corregido,1.517,0.911,4.489,0.997,1.056,Oct,Ene,2016.005
+ERA5 sin corregir,328.621,197.389,333.265,0.615,1.558,May,Ene,5941.252
+ERA5 corregido,5.967,3.584,7.616,0.997,1.073,Oct,Jul,2069.407
