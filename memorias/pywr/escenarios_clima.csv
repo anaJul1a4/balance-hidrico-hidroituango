@@ -1,0 +1,6 @@
+﻿escenario,factor,Energía media (GWh/año),Energía firme 95 % (GWh/año),Energía año más seco (GWh/año),Energía mes más seco (GWh/mes),Agua vertida (% del aporte),Días bajo la curva guía (%),Cota media (m s.n.m.)
+Aportes -20 %,0.8,12685.17,8965.64,8019.58,397.09,1.77,59.01,405.11
+Aportes -10 %,0.9,14047.48,10143.12,9089.72,502.5,3.46,49.55,406.66
+Aportes +0 %,1.0,15218.02,11326.44,10089.34,528.29,5.97,41.32,408.14
+Aportes +10 %,1.1,16262.85,12466.75,11089.11,570.68,8.69,33.91,409.42
+Aportes +20 %,1.2,17143.79,13556.8,12131.34,609.72,11.79,27.65,410.67

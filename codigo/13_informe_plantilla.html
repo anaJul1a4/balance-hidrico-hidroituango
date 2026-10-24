@@ -231,6 +231,29 @@ const PLOTS = {
       annotations: [{ xref: "paper", yref: "paper", x: 1, y: 1.02, xanchor: "right", yanchor: "bottom", showarrow: false,
         text: "línea punteada: energía media de diseño ≈ 13 900 GWh/año", font: { size: 10, color: v("--muted") } }] }), CFG);
   },
+  s_pyclima(el) {
+    const d = D.pyclima;
+    const tr = [
+      { type: "scatter", mode: "lines+markers", name: "Energía media", x: d.x, y: d.media, line: { color: "#2a78d6", width: 2.4 },
+        hovertemplate: "Aportes %{x:+d} %: %{y:,.0f} GWh/año (media)<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "Energía firme (95 %)", x: d.x, y: d.firme, line: { color: "#d7301f", width: 2.4 },
+        hovertemplate: "Aportes %{x:+d} %: %{y:,.0f} GWh/año (firme)<extra></extra>" }];
+    Plotly.react(el, tr, lay({ showlegend: true, xaxis: ax("Cambio en los aportes (%)", { ticksuffix: " %", dtick: 10 }),
+      yaxis: ax("Energía (GWh/año)", { rangemode: "tozero" }) }), CFG);
+  },
+  s_pyqmin(el) {
+    const d = D.pyqmin;
+    const tr = [
+      { type: "scatter", mode: "lines+markers", name: "Energía media", x: d.x, y: d.media, line: { color: "#2a78d6", width: 2.4 },
+        hovertemplate: "Qmín %{x} m³/s: %{y:,.0f} GWh/año (media)<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "Energía firme (95 %)", x: d.x, y: d.firme, line: { color: "#d7301f", width: 2.4 },
+        hovertemplate: "Qmín %{x} m³/s: %{y:,.0f} GWh/año (firme)<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "Mes más seco (eje der.)", x: d.x, y: d.mes, yaxis: "y2",
+        line: { color: "#eb6834", width: 1.8, dash: "dot" }, hovertemplate: "Qmín %{x} m³/s: %{y:,.0f} GWh en el mes más seco<extra></extra>" }];
+    Plotly.react(el, tr, lay({ showlegend: true, margin: { l: 56, r: 56, t: 40, b: 40 },
+      xaxis: ax("Caudal mínimo aguas abajo (m³/s)"), yaxis: ax("Energía anual (GWh/año)", { rangemode: "tozero" }),
+      yaxis2: ax("Energía del mes más seco (GWh)", { overlaying: "y", side: "right", rangemode: "tozero", showgrid: false }) }), CFG);
+  },
   s_pyci(el) {
     const d = D.pywr;
     const tr = [

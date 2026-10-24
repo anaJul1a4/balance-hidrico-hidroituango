@@ -1,0 +1,8 @@
+﻿escenario,factor,Q_medio,Energía media (GWh/año),Energía firme 95 % (GWh/año),Energía año más seco (GWh/año),Energía mes más seco (GWh/mes),Agua vertida (% del aporte),Días bajo la curva guía (%),Cota media (m s.n.m.)
+Observado (IDEAM),1.0,1040.529,15218.017,11326.442,10089.338,528.286,5.972,41.316,408.138
+Balance IDEAM,0.947,985.313,14610.938,10710.891,9588.435,522.538,4.614,45.596,407.37
+Balance CHIRPS v2.0,0.978,1018.105,14975.457,11073.933,9895.676,527.289,5.418,43.032,407.871
+Balance ERA5-Land corregido (QM),0.973,1012.352,14915.833,11027.928,9818.876,526.412,5.254,43.452,407.787
+Balance ERA5 corregido (QM),1.005,1045.995,15272.777,11385.785,10163.218,529.801,6.125,40.924,408.189
+Balance ERA5-Land sin corregir,4.903,5101.746,21037.44,21024.0,21024.0,1612.8,73.531,0.0,420.0
+Balance ERA5 sin corregir,4.924,5123.169,21037.44,21024.0,21024.0,1612.8,73.641,0.0,420.0

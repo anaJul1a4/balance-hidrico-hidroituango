@@ -978,6 +978,68 @@ Software</i>, 126, 104635. <a href="https://doi.org/10.1016/j.envsoft.2020.10463
 </ul>
 </div></div>""")
 
+    # ---- preguntas de planeación: energía firme, clima, caudal ambiental y fuentes de caudal (34b_pywr_escenarios.py)
+    if (PYW / "escenarios_clima.csv").exists():
+        _ec = pd.read_csv(PYW / "escenarios_clima.csv"); _eq = pd.read_csv(PYW / "escenarios_qmin.csv")
+        _ef = pd.read_csv(PYW / "escenarios_fuentes.csv"); _e2 = pd.read_csv(PYW / "escenario_2u_enficc.csv").iloc[0]
+        DATA["pyclima"] = {"x": [round(100 * (f - 1)) for f in _ec.factor], "media": _ec["Energía media (GWh/año)"].round(0).tolist(),
+                           "firme": _ec["Energía firme 95 % (GWh/año)"].round(0).tolist()}
+        DATA["pyqmin"] = {"x": _eq.q_min.tolist(), "media": _eq["Energía media (GWh/año)"].round(0).tolist(),
+                          "firme": _eq["Energía firme 95 % (GWh/año)"].round(0).tolist(),
+                          "mes": _eq["Energía mes más seco (GWh/mes)"].round(0).tolist(),
+                          "curva": _eq["Días bajo la curva guía (%)"].round(1).tolist()}
+        _b = _ec.set_index("factor")
+        dm = lambda f, c: 100 * (_b.loc[f, c] / _b.loc[1.0, c] - 1)  # noqa: E731
+        _tf = _ef.set_index("escenario")[["Q_medio", "Energía media (GWh/año)", "Energía firme 95 % (GWh/año)", "Agua vertida (% del aporte)"]]
+        _tf.columns = ["Aporte medio supuesto (m³/s)", "Energía media (GWh/año)", "Energía firme 95 % (GWh/año)", "Agua vertida (%)"]
+        _tf["Error de la energía firme (%)"] = 100 * (_tf["Energía firme 95 % (GWh/año)"] / _tf.iloc[0]["Energía firme 95 % (GWh/año)"] - 1)
+        _tf.index.name = "Fuente del caudal (8 unidades, Qmín 450)"
+        _r8 = _rs.iloc[0]
+        S["p15"] = (S["p15"][0], S["p15"][1] + f"""
+<h3>Preguntas de planeación</h3>
+<div class="dos"><div>
+<p><b>Energía media y energía firme.</b> La energía media es el promedio de largo plazo; la <b>energía firme</b> es la que la central
+puede garantizar en condiciones secas, que es la que se vende en el mercado (en Colombia, la ENFICC). Aquí se calcula como la
+energía anual excedida el 95 % de los años. Con 8 unidades la central produce en promedio {fmt(_r8['Energía media (GWh/año)'])} GWh/año,
+pero sólo puede garantizar {fmt(_r8['Energía anual excedida 95 % (GWh/año)'])} GWh/año ({100 * _r8['Energía anual excedida 95 % (GWh/año)'] / _r8['Energía media (GWh/año)']:.0f} % de la media),
+y en el peor año (1992) {fmt(_r8['Energía año más seco (GWh/año)'])}.</p>
+<p><b>Contraste con la ENFICC.</b> La única ENFICC verificada es la de 2 unidades: {fmt(_e2['ENFICC verificada (GWh/año)'], ',.1f')} GWh/año
+(Superservicios, 2021). Con 2 unidades, el modelo genera {fmt(_e2['Energía firme 95 % (GWh/año)'])} GWh/año todos los años, el máximo
+posible (600 MW × 8760 h), porque el río siempre trae más agua de la que dos turbinas pueden usar. La ENFICC es el
+{100 * _e2['ENFICC verificada (GWh/año)'] / _e2['Energía firme 95 % (GWh/año)']:.0f} % de ese máximo: la diferencia corresponde a las
+indisponibilidades y mantenimientos que el modelo no incluye, y es coherente con el 9 % de exceso frente a la energía de diseño.</p>
+<p><b>Sensibilidad climática.</b> Con aportes 10 % menores, la energía media cae un {abs(dm(0.9, 'Energía media (GWh/año)')):.0f} % y la firme un
+{abs(dm(0.9, 'Energía firme 95 % (GWh/año)')):.0f} %; con aportes 20 % menores, {abs(dm(0.8, 'Energía media (GWh/año)')):.0f} % y
+{abs(dm(0.8, 'Energía firme 95 % (GWh/año)')):.0f} %. La energía firme responde casi uno a uno al caudal, mientras que la media se
+amortigua porque parte del agua extra se vierte. Combinado con la elasticidad de la escorrentía a la lluvia del punto 8 (≈ 1.9),
+<b>una lluvia 10 % menor reduciría los aportes ≈ 19 % y la energía firme de Hidroituango ≈ 20 %</b>. La cuenca amplifica los cambios de
+la lluvia y la central los transmite casi completos a su energía garantizada.</p>
+</div><div>""" + ancho("s_pyclima", "<p><b>Energía media y firme frente a un cambio en los aportes</b> (8 unidades, caudal mínimo 450 m³/s). "
+                                    "El cursor muestra los valores.</p>", alto="serie corta") + """
+</div></div>
+<div class="dos"><div>""" + ancho("s_pyqmin", "<p><b>Compromiso entre generación y caudal ambiental</b>: energía media y firme (eje izquierdo) y energía "
+                                   "del mes más seco (eje derecho) según el caudal mínimo exigido aguas abajo (8 unidades).</p>",
+                          alto="serie corta") + f"""
+</div><div>
+<p><b>Compromiso entre generación y caudal ambiental.</b> Hasta 450 m³/s, el caudal mínimo casi no cuesta energía: la media se mantiene en
+≈ {fmt(_eq.loc[_eq.q_min == 450, 'Energía media (GWh/año)'].iloc[0])} GWh/año, porque el agua que se libera por el caudal mínimo pasa igual por
+las turbinas. El costo aparece por encima de ese valor: con 800 m³/s la energía firme baja a
+{fmt(_eq.loc[_eq.q_min == 800, 'Energía firme 95 % (GWh/año)'].iloc[0])} GWh/año ({100 * (_eq.loc[_eq.q_min == 800, 'Energía firme 95 % (GWh/año)'].iloc[0] / _eq.loc[_eq.q_min == 450, 'Energía firme 95 % (GWh/año)'].iloc[0] - 1):+.0f} %)
+y el embalse pasa más del {_eq.loc[_eq.q_min == 800, 'Días bajo la curva guía (%)'].iloc[0]:.0f} % de los días bajo la curva guía, con menos
+salto. El mes más seco no cambia de forma monótona: con un mínimo bajo se guarda agua y se genera poco en estiaje; con uno muy alto
+el embalse se vacía antes y también se genera poco. El valor vigente (450 m³/s) está cerca del punto en que el mes más seco genera
+más.</p>
+</div></div>
+<p><b>Fuentes de caudal.</b> Si el planificador hubiera estimado los aportes con el balance de largo plazo de cada fuente de precipitación
+(punto 12), habría supuesto la energía de la tabla. Se conserva la secuencia observada y sólo se escala el caudal medio, de modo que la
+tabla mide el efecto del sesgo de cada fuente. Con el IDEAM, CHIRPS o ERA5 corregido por mapeo de cuantiles, la energía firme queda a
+pocos puntos porcentuales de la observada. Con ERA5 o ERA5-Land sin corregir, los aportes se quintuplican: la central aparecería
+siempre a plena carga y la energía firme se sobrestimaría en un {_tf.iloc[-1]['Error de la energía firme (%)']:.0f} %. Un compromiso de venta
+de energía basado en esos datos sería imposible de cumplir.</p>
+{tabla(_tf, "Energía planificada según la fuente del caudal (8 unidades, caudal mínimo 450 m³/s)",
+       {"Aporte medio supuesto (m³/s)": ",.0f", "Energía media (GWh/año)": ",.0f", "Energía firme 95 % (GWh/año)": ",.0f",
+        "Agua vertida (%)": ".1f", "Error de la energía firme (%)": "+.1f"})}""")
+
 S["ref"] = ("Referencias", """
 <ul class="refs">
 <li>Barnes, R., Lehman, C. y Mulla, D. (2014). Priority-flood: An optimal depression-filling and watershed-labeling algorithm for digital
