@@ -882,6 +882,102 @@ con los caudales (punto 12).</p>
        {"Sesgo (%)": "+.1f", "RMSE (mm/mes)": ".1f", "r": ".3f", "σ normalizada": ".2f"})}
 </div></div>""")
 
+# ----------------------------------------------------------------------------- 15. extensión: operación del embalse con pywr
+PYW = RES / "18_pywr"
+if (PYW / "resumen_escenarios.csv").exists():
+    _rs = pd.read_csv(PYW / "resumen_escenarios.csv", index_col=0)
+    _ea = pd.read_csv(PYW / "energia_anual.csv", index_col=0)
+    _en = pd.read_csv(PYW / "energia_enso.csv", index_col=0)
+    _ap = pd.to_numeric(pd.read_csv(PYW / "resumen_aportes.csv", index_col=0).iloc[:, 0], errors="coerce")
+    _s8 = pd.read_csv(PYW / "sim_8u_qmin450.csv", index_col=0, parse_dates=True)
+    _s4 = pd.read_csv(PYW / "sim_4u_qmin450.csv", index_col=0, parse_dates=True)
+    _cic = lambda s, c: s[c].groupby(s.index.month).mean().round(0).tolist()  # noqa: E731
+    DATA["pywr"] = {"anos": _ea.index.tolist(), "e8": _ea["8 unidades · Qmín 450"].round(0).tolist(),
+                    "e4": _ea["4 unidades · Qmín 450"].round(0).tolist(), "nino": [1983, 1987, 1992, 1998, 2003, 2010],
+                    "nina": [1989, 1999, 2000, 2008], "diseno": 13900,
+                    "ap": _cic(_s8, "Q_aporte"), "t8": _cic(_s8, "Q_turbinado"), "v8": _cic(_s8, "Q_vertido"),
+                    "t4": _cic(_s4, "Q_turbinado"), "v4": _cic(_s4, "Q_vertido")}
+    _tr = _rs[["Potencia instalada (MW)", "Energía media (GWh/año)", "Energía anual excedida 95 % (GWh/año)", "Energía año más seco (GWh/año)",
+               "Factor de planta (%)", "Agua vertida (% del aporte)", "Cota media (m s.n.m.)", "Días bajo la curva guía (%)",
+               "Energía mensual mínima (GWh/mes)"]].T
+    _tr.index.name = "1981–2010"
+    _te = _en.copy(); _te.index.name = "Energía anual"
+    S["p15"] = ("15. Extensión: operación con pywr", f"""
+<p class="lead">El balance de largo plazo dice cuánta agua llega a la presa (≈ 1040 m³/s); esta extensión simula qué significa esa agua
+en energía. Con los caudales diarios 1981–2010 y la central completa (8 unidades, 2400 MW), el embalse produciría en promedio
+{fmt(_rs.iloc[0]['Energía media (GWh/año)'])} GWh/año, pero en un año seco como 1992 sólo {fmt(_rs.iloc[0]['Energía año más seco (GWh/año)'])}:
+la variabilidad del clima pesa más que cualquier decisión de operación.</p>""" +
+        figura("18_pywr/pywr_series.png", "p15_series", "Operación simulada del embalse",
+               "Cota del embalse y caudales diarios aportados, turbinados y vertidos con 8 y 4 unidades (caudal mínimo 450 m³/s).", 2200) + f"""
+<div class="dos"><div>
+<h3>Metodología</h3>
+<p><b>Modelo.</b> <a href="https://pywr.github.io/pywr/">pywr</a> (Python) representa el sistema como una red: aporte del Cauca →
+embalse → turbinas o vertedero → río aguas abajo. En cada día resuelve un problema de programación lineal que reparte el agua
+según costos: generar es lo prioritario, guardar agua tiene un valor menor y verter sólo ocurre con el embalse lleno.</p>
+<p><b>Aportes.</b> Serie diaria 1981–2010 a la presa: Puerto Valdivia transferido por áreas (mismo criterio del punto 8), con los
+días faltantes ({_ap['días rellenados con Cañafisto (%)']:.0f} %) rellenados desde Cañafisto por regresión log-lineal con corrección
+de Duan (NSE = {_ap['NSE validación (año fuera)']:.2f} dejando años fuera). Media {_ap['Q medio presa 1981–2010 (m³/s)']:.0f} m³/s.</p>
+<p><b>Central</b> (datos verificados en las fuentes): volumen útil 900 hm³ entre las cotas 390 y 420 m s.n.m. y volumen total
+2720 hm³ (EPM, Plan de Gestión del Riesgo 2024); 8 turbinas Francis de 168.8 m³/s, salto neto de diseño 197.3 m, 1350 m³/s en
+total (ANLA, Resolución 155 de 2009); 300 MW por generador. Caudal mínimo aguas abajo de 450 m³/s (valor vigente según EPM) y,
+como sensibilidad, 300 m³/s (licencia de 2009).</p>
+<p><b>Supuestos.</b> La curva cota–volumen no está publicada: se supuso lineal en el volumen útil. El salto neto es el de diseño
+en la cota media útil (405 m) y varía con el nivel; la eficiencia global (0.918) se dedujo de los datos de diseño. La regla de
+operación es una curva guía: con más del 50 % del volumen útil se turbina a plena capacidad y por debajo sólo el caudal mínimo.
+No se modelan indisponibilidades ni mantenimientos.</p>
+<p><b>Escenarios.</b> 8 unidades (diseño, 2400 MW) y 4 unidades (en operación desde 2023, 1200 MW), cada uno con caudal
+mínimo de 450 y 300 m³/s.</p>
+</div><div>
+<h3>Resultados</h3>
+{tabla(_tr, "Energía y operación por escenario (caudales diarios 1981–2010)", {c: ",.0f" for c in _tr.columns})}
+<p><b>Validación.</b> La energía media con 8 unidades ({fmt(_rs.iloc[0]['Energía media (GWh/año)'])} GWh/año) queda 9 % por encima de la
+de diseño del proyecto (≈ 13 900 GWh/año; EPM, Superservicios). Es coherente con un modelo sin indisponibilidades ni
+mantenimientos (que suelen restar 3–6 %) y con una serie de aportes algo mayor que la del proyecto (1041 frente a 1010 m³/s).</p>
+</div></div>""" +
+        ancho("s_pyea", "<p><b>Energía anual simulada</b> con 8 y 4 unidades (caudal mínimo 450 m³/s). Las barras rojas son años El Niño y las "
+                        "azules años La Niña (los mismos del punto 8); la línea punteada es la energía media de diseño del proyecto. El "
+                        "cursor muestra la energía de cada año.</p>") +
+        ancho("s_pyci", "<p><b>Ciclo anual de la operación</b>: aporte medio mensual y caudal turbinado y vertido con 8 y 4 unidades. "
+                        "El cursor muestra los valores de cada mes.</p>") + f"""
+<div class="dos"><div>
+<h3>Análisis</h3>
+<p><b>Cuánta capacidad.</b> Con 4 unidades (1200 MW) la central trabaja casi siempre a plena carga (factor de planta
+{_rs.iloc[2]['Factor de planta (%)']:.0f} %), pero no alcanza a usar el río: se vierte el {_rs.iloc[2]['Agua vertida (% del aporte)']:.0f} %
+del agua y la energía media es {fmt(_rs.iloc[2]['Energía media (GWh/año)'])} GWh/año. Con 8 unidades el vertimiento baja al
+{_rs.iloc[0]['Agua vertida (% del aporte)']:.0f} % y la energía sube un {100 * (_rs.iloc[0]['Energía media (GWh/año)'] / _rs.iloc[2]['Energía media (GWh/año)'] - 1):.0f} %.
+Las 4 unidades restantes valen sobre todo en los años y meses húmedos. En 1992, el año más seco, las dos configuraciones generan
+casi lo mismo ({fmt(_ea.loc[1992, '8 unidades · Qmín 450'])} frente a {fmt(_ea.loc[1992, '4 unidades · Qmín 450'])} GWh,
+{100 * (_ea.loc[1992, '8 unidades · Qmín 450'] / _ea.loc[1992, '4 unidades · Qmín 450'] - 1):.0f} % de diferencia), porque el agua no alcanza
+para más turbinas: la capacidad adicional casi no aumenta la energía firme.</p>
+<p><b>ENSO.</b> Con 8 unidades, la energía anual cae un {abs(_en.iloc[0, 0]):.0f} % en años El Niño y sube un {_en.iloc[0, 1]:.0f} % en años
+La Niña. Con 4 unidades la señal casi desaparece ({_en.iloc[2, 0]:+.0f} % y {_en.iloc[2, 1]:+.0f} %), porque la central está limitada
+por su capacidad y no por el agua: el exceso de La Niña se vierte. Es la misma amplificación de la variabilidad del clima que se vio
+en los caudales (punto 8), ahora traducida en energía.</p>
+<p><b>Caudal mínimo.</b> Pasar de 300 a 450 m³/s casi no cambia la energía anual (el agua se turbina igual, sólo en otro momento),
+pero sí la mensual: con 8 unidades, el peor mes baja de {_rs.iloc[1]['Energía mensual mínima (GWh/mes)']:.0f} a
+{_rs.iloc[0]['Energía mensual mínima (GWh/mes)']:.0f} GWh y el embalse pasa más tiempo bajo la curva guía
+({_rs.iloc[1]['Días bajo la curva guía (%)']:.0f} % frente a {_rs.iloc[0]['Días bajo la curva guía (%)']:.0f} % de los días). El costo del caudal
+ambiental está en la estación seca, no en el año.</p>
+<p><b>Limitaciones.</b> La regla de curva guía es simple: con 8 unidades el embalse oscila alrededor de la cota 405 porque alterna
+entre turbinar todo y turbinar el mínimo. Una regla optimizada (por ejemplo, curvas guía mensuales o programación dinámica
+estocástica) y la curva cota–volumen real afinarían los resultados. Los caudales de 1981–2010 son anteriores al embalse y
+representan el aporte natural; no incluyen el cambio climático.</p>
+</div><div>
+{tabla(_te, "Energía anual en años ENSO frente a la media (caudal mínimo 450 y 300 m³/s)", {c: "+.1f" for c in _te.columns})}
+<h3>Fuentes de los datos técnicos</h3>
+<ul class="refs">
+<li>EPM – Hidroeléctrica Ituango S.A. E.S.P. (2024). <i>Plan de gestión del riesgo de desastres</i> (PGRDEPP-PHI-V8).
+<a href="https://www.epm.com.co/content/dam/epm/institucional/proyectos/hidroituango/gestion-riesgo/PGRDEPP-PHI-V8.pdf">PDF</a></li>
+<li>MAVDT (2009). Resolución 0155 del 30 de enero de 2009, licencia ambiental del proyecto.
+<a href="https://www.anla.gov.co/images/documentos/resoluciones/2023-09-19-anla-res-155-30012009.pdf">PDF (ANLA)</a></li>
+<li>EPM. <i>Hidroituango: gestión técnica</i>. <a href="https://www.epm.com.co/institucional/proyectos/hidroituango/gestion-tecnica/">Página web</a></li>
+<li>Superservicios (2021). Informe de vigilancia, capítulo 5: Proyecto Hidroituango.
+<a href="https://www.superservicios.gov.co/sites/default/files/inline-files/6._capitulo_5_-_proyecto_hidroituango.pdf">PDF</a></li>
+<li>Tomlinson, J. E., Arnott, J. H. y Harou, J. J. (2020). A water resource simulator in Python. <i>Environmental Modelling &amp;
+Software</i>, 126, 104635. <a href="https://doi.org/10.1016/j.envsoft.2020.104635">doi</a></li>
+</ul>
+</div></div>""")
+
 S["ref"] = ("Referencias", """
 <ul class="refs">
 <li>Barnes, R., Lehman, C. y Mulla, D. (2014). Priority-flood: An optimal depression-filling and watershed-labeling algorithm for digital
@@ -905,7 +1001,7 @@ Catálogo Nacional de Estaciones (datos.gov.co).</li>
 <p class="nota">Datos y procesamiento: scripts 01 a 21 del proyecto (Python: pysheds, rasterio, geopandas, xarray, scipy, matplotlib, Plotly).</p>""")
 
 # ----------------------------------------------------------------------------- página
-orden = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "ref"]
+orden = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14"] + (["p15"] if "p15" in S else []) + ["ref"]
 tabs = "".join(f'<button role="tab" type="button" id="t-{k}" aria-controls="{k}" aria-selected="false">{S[k][0]}</button>' for k in orden)
 panes = "".join(f'<section role="tabpanel" id="{k}" aria-labelledby="t-{k}" hidden><h2>{S[k][0]}</h2>{S[k][1]}</section>' for k in orden)
 page = (Path(__file__).parent / "13_informe_plantilla.html").read_text(encoding="utf-8")

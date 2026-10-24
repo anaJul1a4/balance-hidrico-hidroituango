@@ -216,6 +216,36 @@ const PLOTS = {
           { "yaxis.title.text": "% del total anual", "yaxis.rangemode": "normal" }] }] }];
     Plotly.react(el, abs, L, CFG);
   },
+  s_pyea(el) {
+    const d = D.pywr;
+    const tipo = a => d.nino.includes(a) ? "El Niño" : (d.nina.includes(a) ? "La Niña" : "");
+    const col8 = d.anos.map(a => tipo(a) === "El Niño" ? "#d7301f" : (tipo(a) === "La Niña" ? "#2a78d6" : "#9e9e9e"));
+    const tr = [
+      { type: "bar", name: "8 unidades (2400 MW)", x: d.anos, y: d.e8, marker: { color: col8 }, customdata: d.anos.map(tipo),
+        hovertemplate: "%{x} · 8 unidades: %{y:,.0f} GWh %{customdata}<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "4 unidades (1200 MW)", x: d.anos, y: d.e4, line: { color: "#eb6834", width: 2 },
+        marker: { size: 5, color: "#eb6834" }, hovertemplate: "%{x} · 4 unidades: %{y:,.0f} GWh<extra></extra>" }];
+    Plotly.react(el, tr, lay({ showlegend: true, bargap: .25, xaxis: ax(""), yaxis: ax("Energía anual (GWh)", { rangemode: "tozero" }),
+      shapes: [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: d.diseno, y1: d.diseno, line: { color: v("--ink"), width: 1.2, dash: "dot" } }],
+      margin: { l: 56, r: 12, t: 40, b: 36 },
+      annotations: [{ xref: "paper", yref: "paper", x: 1, y: 1.02, xanchor: "right", yanchor: "bottom", showarrow: false,
+        text: "línea punteada: energía media de diseño ≈ 13 900 GWh/año", font: { size: 10, color: v("--muted") } }] }), CFG);
+  },
+  s_pyci(el) {
+    const d = D.pywr;
+    const tr = [
+      { type: "scatter", mode: "lines+markers", name: "Aporte", x: MESES, y: d.ap, line: { color: v("--ink"), width: 2.4 },
+        hovertemplate: "Aporte · %{x}: %{y:,.0f} m³/s<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "Turbinado, 8 unidades", x: MESES, y: d.t8, line: { color: "#2a78d6", width: 2 },
+        hovertemplate: "Turbinado (8 u.) · %{x}: %{y:,.0f} m³/s<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "Vertido, 8 unidades", x: MESES, y: d.v8, line: { color: "#2a78d6", width: 1.5, dash: "dot" },
+        hovertemplate: "Vertido (8 u.) · %{x}: %{y:,.0f} m³/s<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "Turbinado, 4 unidades", x: MESES, y: d.t4, line: { color: "#eb6834", width: 2 },
+        hovertemplate: "Turbinado (4 u.) · %{x}: %{y:,.0f} m³/s<extra></extra>" },
+      { type: "scatter", mode: "lines+markers", name: "Vertido, 4 unidades", x: MESES, y: d.v4, line: { color: "#eb6834", width: 1.5, dash: "dot" },
+        hovertemplate: "Vertido (4 u.) · %{x}: %{y:,.0f} m³/s<extra></extra>" }];
+    Plotly.react(el, tr, lay({ showlegend: true, xaxis: ax(""), yaxis: ax("Caudal medio mensual (m³/s)", { rangemode: "tozero" }) }), CFG);
+  },
   s_cicqm(el) {
     const d = D.cicqm, tot = a => a.reduce((x, y) => x + y, 0);
     const col = { "IDEAM": v("--ink"), "CHIRPS": "#2a78d6", "ERA5-Land": "#eb6834", "ERA5": "#1baf7a" };

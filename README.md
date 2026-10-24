@@ -49,6 +49,23 @@ así, su lluvia anual se correlaciona con el caudal mucho menos que CHIRPS (0,62
 - La lluvia es bimodal en el 99,8 % del área, con máximos en abril (218 mm) y octubre (240 mm).
 - Los caudales responden al ENSO con una variabilidad interanual 2,6 veces mayor que la de la lluvia.
 
+## Extensión: operación del embalse con pywr
+
+Simulación diaria 1981–2010 de la operación de Hidroituango con [pywr](https://pywr.github.io/pywr/) (pestaña 15 de la página):
+
+| Escenario | Energía media (GWh/año) | Año más seco | Agua vertida |
+|---|---|---|---|
+| 8 unidades (2400 MW), caudal mínimo 450 m³/s | 15 218 | 10 089 (1992) | 6 % |
+| 4 unidades (1200 MW), caudal mínimo 450 m³/s | 10 315 | 9 535 (1987) | 36 % |
+
+- Con 8 unidades la energía cae 13 % en años El Niño y sube 25 % en años La Niña.
+- Pasar el caudal mínimo de 300 a 450 m³/s casi no cambia la energía anual, pero sí la del mes más seco.
+- Los datos técnicos están verificados en EPM (2024) y en la Resolución 155 de 2009 de la ANLA.
+- Supuestos principales: curva cota–volumen lineal y regla de operación de curva guía.
+- Scripts: `codigo/33_aportes_presa_diarios.py`, `codigo/34_pywr_hidroituango.py` y `codigo/35_figura_pywr.py`. El 34 se ejecuta con
+  `pip install pywr==1.31.1` en un entorno aparte.
+- Resultados en `memorias/pywr/`.
+
 ## Contenido del repositorio
 
 | Carpeta | Contenido |

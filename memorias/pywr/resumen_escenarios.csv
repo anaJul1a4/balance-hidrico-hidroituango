@@ -1,0 +1,5 @@
+﻿escenario,unidades,Q mínimo (m³/s),Potencia instalada (MW),Energía media (GWh/año),Energía año más seco (GWh/año),Año más seco,Energía anual excedida 95 % (GWh/año),Factor de planta (%),Caudal turbinado medio (m³/s),Caudal vertido medio (m³/s),Agua vertida (% del aporte),Días con caudal al río < Qmín (%),Cota media (m s.n.m.),Días bajo la curva guía (%),Energía mensual mínima (GWh/mes)
+8 unidades · Qmín 450,8,450,2400.0,15218.02,10089.34,1992,11326.44,72.34,978.39,62.14,5.97,0.0,408.14,41.32,528.29
+8 unidades · Qmín 300,8,300,2400.0,15219.49,10099.89,1992,11344.81,72.34,978.35,62.18,5.98,0.0,408.37,35.42,488.63
+4 unidades · Qmín 450,4,450,1200.0,10315.49,9535.06,1987,9636.67,98.07,662.33,378.19,36.35,0.0,417.35,5.71,530.26
+4 unidades · Qmín 300,4,300,1200.0,10313.62,9549.75,1987,9622.15,98.05,662.05,378.48,36.37,0.0,417.45,3.5,501.66

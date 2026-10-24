@@ -1,0 +1,15 @@
+﻿,valor
+rezago Cañafisto → Pto. Valdivia (días),0
+r(ln Q) con ese rezago,0.9364424882357024
+regresión,ln Q_PV = 1.576 + 0.7918·ln Q_Cañafisto(t−0)
+factor de Duan,1.0108207885181064
+NSE validación (año fuera),0.8755202869663186
+días observados (%),90.19804691065073
+días rellenados con Cañafisto (%),9.765446746372183
+días interpolados,4
+días sin dato,0
+Q medio presa 1981–2010 (m³/s),1040.5286613085677
+Q medio presa sólo días observados (m³/s),1063.0659710451716
+Q mínimo diario (m³/s),247.43336356562105
+Q máximo diario (m³/s),4870.43892451767
+"Q95 (excedido 95 % del tiempo, m³/s)",488.68572195239756
