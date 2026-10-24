@@ -1040,6 +1040,111 @@ de energía basado en esos datos sería imposible de cumplir.</p>
        {"Aporte medio supuesto (m³/s)": ",.0f", "Energía media (GWh/año)": ",.0f", "Energía firme 95 % (GWh/año)": ",.0f",
         "Agua vertida (%)": ".1f", "Error de la energía firme (%)": "+.1f"})}""")
 
+# ----------------------------------------------------------------------------- 16. extensión: pronóstico de caudales (scripts 36–38)
+PRO = RES / "19_pronostico"
+if (PRO / "horizonte.csv").exists():
+    _mp = pd.read_csv(PRO / "metricas_prueba.csv")
+    _hz = pd.read_csv(PRO / "horizonte.csv")
+    _sp = pd.read_csv(PRO / "series_prueba.csv", index_col=0, parse_dates=True)
+    _nd = pd.read_csv(PRO / "nodos.csv", dtype={"codigo": str})
+    _hp = lambda m, c: _hz[_hz.modelo == m][c].round(3).tolist()  # noqa: E731
+    _mods = ["Persistencia", "Climatología", "Ridge (lineal)", "KNN (análogos)"]
+    DATA["pron"] = {"h": sorted(_hz["anticipación (días)"].unique().tolist()),
+                    "nse": {m: _hp(m, "NSE") for m in _mods}, "hab": {m: _hp(m, "Habilidad vs persistencia") for m in _mods},
+                    "cob": _hp("KNN (análogos)", "Cobertura intervalo 80 % (%)"), "t": _sp.index.strftime("%Y-%m-%d").tolist()}
+    for c in ["obs_t+3", "Persistencia_t+3", "Ridge (lineal)_t+3", "GNN (grafo de la cuenca)_t+3"]:
+        DATA["pron"][c.split("_")[0]] = _sp[c].round(0).tolist()
+    _tm = _mp.pivot(index="modelo", columns="anticipación (días)", values="NSE")
+    _tm = _tm.loc[["Persistencia", "Climatología", "Ridge (lineal)", "MLP (sin grafo)", "GNN (grafo de la cuenca)"]]
+    _th = _mp.pivot(index="modelo", columns="anticipación (días)", values="Habilidad vs persistencia").loc[_tm.index]
+    _tt = pd.concat([_tm.add_prefix("NSE · "), (100 * _th).add_prefix("Mejora vs persistencia (%) · ")], axis=1)
+    _tt.columns = [c.replace("· 1", "· 1 día").replace("· 3", "· 3 días").replace("· 7", "· 7 días") for c in _tt.columns]
+    _tt.index.name = "Modelo"
+    _rg = _mp[_mp.modelo.str.startswith("GNN")].set_index("anticipación (días)")["NSE min–max semillas"]
+    _kn = _hz[_hz.modelo.str.startswith("KNN")].set_index("anticipación (días)")
+    _r = lambda m, h, c="NSE": _hz[(_hz.modelo == m) & (_hz["anticipación (días)"] == h)][c].iloc[0]  # noqa: E731
+    S["p16"] = ("16. Extensión: pronóstico de caudales", f"""
+<p class="lead">pywr necesita saber cuánta agua llegará a la presa. Con los caudales históricos se responde la planeación de largo
+plazo (punto 15); para operar el embalse día a día se necesita un pronóstico. Aquí se pronostica el aporte diario a la presa
+con 1 a 30 días de anticipación y se compara una red neuronal de grafos (GNN), que conoce la red de drenaje, con modelos más
+simples. Resultado: <b>la GNN no supera a una regresión lineal</b>, el pronóstico útil llega hasta <b>unos 7 días</b>, y a más de 15
+días sólo el método de análogos (KNN) conserva algo de información.</p>""" + lado(
+        figura("19_pronostico/grafo_estaciones.png", "p16_grafo", "Grafo de las estaciones de caudal",
+               f"{len(_nd)} estaciones IDEAM con ≥ 70 % de datos diarios en 1981–2010 y la presa. Cada flecha une una estación con la "
+               "siguiente estación aguas abajo, siguiendo las direcciones de flujo D8 del punto 2.", 1000), f"""
+<h3>Metodología</h3>
+<p><b>Objetivo.</b> El aporte diario a la presa (el mismo de pywr: Puerto Valdivia transferido por áreas) en el día t + h, con
+h = 1 a 30 días, a partir de lo observado hasta el día t.</p>
+<p><b>Grafo.</b> Los nodos son las {len(_nd)} estaciones de caudal de la cuenca con al menos 70 % de datos diarios en 1981–2010, más
+la presa. Las aristas se obtienen recorriendo la red de drenaje del punto 2 (DEM a 90 m, direcciones D8) desde cada estación hasta
+la primera estación que encuentra aguas abajo. La estructura es casi una cadena: los tributarios llegan a las estaciones del
+Cauca y éstas se encadenan hasta la presa.</p>
+<p><b>Entradas.</b> Caudal de los últimos 7 días en todas las estaciones, en ln(1 + Q) estandarizado; los faltantes se rellenan
+(interpolación corta o climatología diaria) y una máscara le indica al modelo qué datos son rellenados. Se agrega el día del año
+(seno y coseno) para el ciclo bimodal.</p>
+<p><b>Periodos.</b> Entrenamiento 1981–2000, validación 2001–2005 (para escoger hiperparámetros y detener el entrenamiento) y
+prueba 2006–2010, que ningún modelo vio. Todas las métricas son de la prueba.</p>
+<p><b>Modelos.</b></p>
+<ul class="dec">
+<li><b>Persistencia</b>: mañana llega lo mismo que hoy. Es la referencia que todo pronóstico debe superar.</li>
+<li><b>Climatología</b>: el caudal medio de ese día del año.</li>
+<li><b>Ridge</b>: regresión lineal regularizada con todas las entradas.</li>
+<li><b>MLP</b>: red neuronal densa con las mismas entradas, sin la estructura del grafo.</li>
+<li><b>GNN</b>: red de grafos con tres capas de paso de mensajes dirigido aguas abajo; cada estación recibe la información de sus
+estaciones aguas arriba, y la predicción sale del nodo de la presa. MLP y GNN se entrenan con 5 semillas y se reporta la media.</li>
+<li><b>KNN (análogos)</b>: busca los días de 1981–2005 más parecidos al de hoy y usa la mediana de lo que pasó h días después;
+los percentiles 10 y 90 de esos análogos dan un intervalo del 80 %.</li>
+</ul>
+<p><b>Métricas.</b> NSE y la <b>mejora frente a la persistencia</b>, 1 − MSE<sub>modelo</sub>/MSE<sub>persistencia</sub>: 0 significa que
+el modelo no aporta nada sobre suponer que el caudal no cambia; valores negativos, que es peor.</p>""") + f"""
+{tabla(_tt, "Pronóstico del aporte a la presa en el periodo de prueba 2006–2010",
+       {c: (".3f" if c.startswith("NSE") else "+.0f") for c in _tt.columns},
+       nota=f"MLP y GNN: media de 5 semillas; NSE de la GNN entre semillas: {_rg.loc[1]} (1 día), {_rg.loc[3]} (3 días) y {_rg.loc[7]} (7 días).")}
+<div class="dos"><div>""" + ancho("s_pronse", "<p><b>NSE según la anticipación</b> en la prueba 2006–2010. El cursor muestra los valores.</p>",
+                                alto="serie corta") + """
+</div><div>""" + ancho("s_prohab", "<p><b>Mejora frente a la persistencia</b>: por encima de 0, el modelo aporta información; por debajo, "
+                                   "es mejor suponer que el caudal no cambia.</p>", alto="serie corta") + """
+</div></div>""" + ancho("s_proser", "<p><b>Aporte observado y pronosticado con 3 días de anticipación</b> en la prueba 2006–2010 (incluye "
+                                    "La Niña 2007–08 y 2010–11). El cursor muestra los valores de cada día.</p>") + f"""
+<h3>Análisis</h3>
+<div class="dos"><div>
+<p><b>¿GNN o KNN?</b> Ninguno de los dos es la mejor opción a corto plazo. A 1 y 3 días la regresión lineal es la mejor
+(NSE {_tm.loc['Ridge (lineal)', 1]:.2f} y {_tm.loc['Ridge (lineal)', 3]:.2f}); la GNN apenas supera a la persistencia (mejora de
+{100 * _th.loc['GNN (grafo de la cuenca)', 1]:.0f} % a 1 día) y a 7 días los tres modelos aprendidos quedan empatados (NSE ≈ 0.59–0.60).
+La razón es física: el caudal en la presa es casi la suma rezagada de lo que pasa por Cañafisto, Puerto Valdivia y sus tributarios, una
+relación casi lineal que la regresión ya captura. El grafo es casi una cadena y 20 años de datos diarios son pocos para que una red
+con más parámetros aprenda algo adicional. El KNN es peor que la persistencia hasta 7 días (NSE {_r('KNN (análogos)', 1):.2f} a 1 día),
+pero es el mejor de 15 a 30 días: cuando ya no hay agua en camino que medir, buscar situaciones parecidas en el pasado aporta más que
+extrapolar.</p>
+<p><b>¿Hasta cuántos días?</b></p>
+<ul class="dec">
+<li><b>1 a 3 días: confiable.</b> NSE {_r('Ridge (lineal)', 3):.2f}–{_r('Ridge (lineal)', 1):.2f}; error típico (RMSE) de
+{_r('Ridge (lineal)', 1, 'RMSE (m³/s)'):.0f} a {_r('Ridge (lineal)', 3, 'RMSE (m³/s)'):.0f} m³/s, frente a un aporte medio de ≈ 1040 m³/s.
+Es el tiempo de viaje del agua desde las estaciones aguas arriba.</li>
+<li><b>5 a 7 días: útil con cautela.</b> NSE {_r('Ridge (lineal)', 7):.2f}–{_r('Ridge (lineal)', 5):.2f}; la mejora sobre la persistencia
+baja de {100 * _r('Ridge (lineal)', 5, 'Habilidad vs persistencia'):.0f} a {100 * _r('Ridge (lineal)', 7, 'Habilidad vs persistencia'):.0f} %.
+Sirve para preparar el embalse ante una creciente, no para fijar la generación.</li>
+<li><b>10 días o más: sin habilidad práctica.</b> A 10 días la mejora es de {100 * _r('Ridge (lineal)', 10, 'Habilidad vs persistencia'):.0f} %.
+De 15 a 30 días sólo el KNN conserva algo (NSE {_r('KNN (análogos)', 30):.2f}–{_r('KNN (análogos)', 15):.2f}): indica si vienen semanas
+más húmedas o más secas que lo normal, no el caudal de un día.</li>
+</ul>
+</div><div>
+<p><b>Confiabilidad de los intervalos.</b> El intervalo del 80 % del KNN debería contener el caudal observado 8 de cada 10 días, pero lo
+contiene sólo entre el {_kn['Cobertura intervalo 80 % (%)'].min():.0f} y el {_kn['Cobertura intervalo 80 % (%)'].max():.0f} % de las veces,
+aunque su ancho va de {_kn['Ancho medio intervalo 80 % (m³/s)'].min():.0f} m³/s a 1 día a {_kn['Ancho medio intervalo 80 % (m³/s)'].max():.0f} m³/s a
+20 días. Los intervalos subestiman la incertidumbre: habría que calibrarlos (por ejemplo, ampliándolos con los errores de validación)
+antes de usarlos para decidir.</p>
+<p><b>Un periodo de prueba húmedo.</b> 2006–2010 tuvo La Niña en 2007–08 y 2010, y fue más húmedo que 1981–2000: la climatología
+subestima el caudal un {abs(_mp[_mp.modelo == 'Climatología']['Sesgo (%)'].mean()):.0f} % y su NSE es ≈ {_mp[_mp.modelo == 'Climatología'].NSE.mean():.2f}.
+Por eso la planeación con promedios históricos falla justo en los años extremos, y los modelos con información reciente la superan.</p>
+<p><b>Qué decisiones permite.</b> Con 1 a 3 días se puede programar el despacho y anticipar vertimientos ante crecientes; con 5 a 7 días,
+bajar el nivel del embalse antes de una creciente o conservar agua si se anticipa una recesión. Para planear semanas o meses (la
+energía firme, la estación seca) se necesitan pronósticos de lluvia o el estado de ENSO como entradas, no sólo caudales pasados.</p>
+<p><b>Limitaciones.</b> Sólo se usan caudales: sin lluvia observada o pronosticada, ningún modelo puede anticipar una creciente que aún
+no ha empezado. Los datos faltantes se rellenan, lo que suaviza los picos. La GNN podría mejorar con lluvia por subcuenca como atributo
+de los nodos, que es justamente la información que el grafo sabe distribuir.</p>
+</div></div>""")
+
 S["ref"] = ("Referencias", """
 <ul class="refs">
 <li>Barnes, R., Lehman, C. y Mulla, D. (2014). Priority-flood: An optimal depression-filling and watershed-labeling algorithm for digital
@@ -1063,7 +1168,7 @@ Catálogo Nacional de Estaciones (datos.gov.co).</li>
 <p class="nota">Datos y procesamiento: scripts 01 a 21 del proyecto (Python: pysheds, rasterio, geopandas, xarray, scipy, matplotlib, Plotly).</p>""")
 
 # ----------------------------------------------------------------------------- página
-orden = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14"] + (["p15"] if "p15" in S else []) + ["ref"]
+orden = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14"] + [k for k in ("p15", "p16") if k in S] + ["ref"]
 tabs = "".join(f'<button role="tab" type="button" id="t-{k}" aria-controls="{k}" aria-selected="false">{S[k][0]}</button>' for k in orden)
 panes = "".join(f'<section role="tabpanel" id="{k}" aria-labelledby="t-{k}" hidden><h2>{S[k][0]}</h2>{S[k][1]}</section>' for k in orden)
 page = (Path(__file__).parent / "13_informe_plantilla.html").read_text(encoding="utf-8")

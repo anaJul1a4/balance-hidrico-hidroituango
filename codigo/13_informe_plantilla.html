@@ -269,6 +269,26 @@ const PLOTS = {
         hovertemplate: "Vertido (4 u.) · %{x}: %{y:,.0f} m³/s<extra></extra>" }];
     Plotly.react(el, tr, lay({ showlegend: true, xaxis: ax(""), yaxis: ax("Caudal medio mensual (m³/s)", { rangemode: "tozero" }) }), CFG);
   },
+  prohz(el, clave, titulo, cero) {
+    const d = D.pron, col = { "Persistencia": "#9e9e9e", "Climatología": v("--ink"), "Ridge (lineal)": "#2a78d6", "KNN (análogos)": "#eb6834" };
+    const tr = Object.keys(d[clave]).filter(m => clave === "nse" || m !== "Persistencia").map(m => ({ type: "scatter", mode: "lines+markers",
+      name: m, x: d.h, y: d[clave][m], line: { color: col[m], width: 2.2, dash: m === "Climatología" ? "dot" : "solid" }, marker: { size: 6, color: col[m] },
+      hovertemplate: clave === "nse" ? `${m} · %{x} días: NSE %{y:.2f}<extra></extra>` : `${m} · %{x} días: %{y:+.0%}<extra></extra>` }));
+    Plotly.react(el, tr, lay({ showlegend: true, margin: { l: 56, r: 12, t: 40, b: 40 },
+      xaxis: ax("Anticipación (días)", { tickvals: d.h }),
+      yaxis: ax(titulo, clave === "nse" ? { range: [-0.1, 1] } : { tickformat: ".0%", range: [-1.2, 0.4] }),
+      shapes: cero ? [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: 0, y1: 0, line: { color: v("--ink"), width: 1 } }] : [] }), CFG);
+  },
+  s_pronse(el) { PLOTS.prohz(el, "nse", "NSE", false); },
+  s_prohab(el) { PLOTS.prohz(el, "hab", "Mejora frente a la persistencia", true); },
+  s_proser(el) {
+    const d = D.pron, ser = [["obs", "Observado", v("--ink"), 2], ["Persistencia", "Persistencia", "#9e9e9e", 1.2],
+      ["Ridge (lineal)", "Ridge (lineal)", "#2a78d6", 1.4], ["GNN (grafo de la cuenca)", "GNN", "#d7301f", 1.4]];
+    const tr = ser.map(([k, n, c, w]) => ({ type: "scatter", mode: "lines", name: n, x: d.t, y: d[k], line: { color: c, width: w },
+      hovertemplate: `${n}: %{y:,.0f} m³/s<extra></extra>` }));
+    Plotly.react(el, tr, lay({ showlegend: true, hovermode: "x unified", margin: { l: 56, r: 12, t: 40, b: 30 },
+      xaxis: ax("", { type: "date" }), yaxis: ax("Aporte a la presa (m³/s)", { rangemode: "tozero" }) }), CFG);
+  },
   s_cicqm(el) {
     const d = D.cicqm, tot = a => a.reduce((x, y) => x + y, 0);
     const col = { "IDEAM": v("--ink"), "CHIRPS": "#2a78d6", "ERA5-Land": "#eb6834", "ERA5": "#1baf7a" };

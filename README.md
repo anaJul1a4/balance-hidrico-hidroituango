@@ -66,6 +66,18 @@ Simulación diaria 1981–2010 de la operación de Hidroituango con [pywr](https
   `pip install pywr==1.31.1` en un entorno aparte.
 - Resultados en `memorias/pywr/`.
 
+## Extensión: pronóstico de caudales
+
+Pronóstico del aporte diario a la presa con 1 a 30 días de anticipación (pestaña 16 de la página), prueba en 2006–2010:
+
+- Grafo de 53 estaciones IDEAM más la presa, construido con las direcciones de flujo D8 del DEM (`codigo/36_grafo_estaciones.py`).
+- Modelos: persistencia, climatología, regresión ridge, red densa (MLP), red de grafos (GNN) y análogos (KNN)
+  (`codigo/37_pronostico_caudales.py`, `codigo/38_horizonte_knn.py`; requieren `torch` y `scikit-learn`).
+- La GNN no supera a la regresión lineal (NSE a 1 día: 0.89 frente a 0.91). El pronóstico es útil hasta unos 7 días (NSE ≈ 0.6);
+  a más de 10 días la mejora sobre la persistencia es casi nula y sólo el KNN conserva algo de habilidad. Los intervalos del 80 %
+  del KNN contienen el caudal observado sólo el 56–72 % de las veces.
+- Resultados en `memorias/pronostico/`.
+
 ## Contenido del repositorio
 
 | Carpeta | Contenido |
